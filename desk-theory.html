@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Theory for the Sound Desk · Gain Changer</title>
+<meta name="description" content="The music theory a sound engineer uses: notes, tempo, keys and song form.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23101318'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23f2b33d' stroke-width='3'/%3E%3Cpath d='M16 16 22 9' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sister page to the EQ, Compression and Pan maps. One section per topic; each pairs a working tool with "at the desk" notes. */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --fg:#1b2129; --muted:#5d6672; --rule:#dde2e8; --grid:#e8ecf0; --sel:#eef2f7;
+  --acc:#1f6fae; --warm:#c8691c; --green:#2f7d5b; --violet:#8a4fa8; --ink:#3a4350;
+  --white:#ffffff; --black:#262c35;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --acc:#5aa9e6; --warm:#f0a050; --green:#5cc596; --violet:#c493dc; --ink:#aab4c0;
+  --white:#d9dee5; --black:#0b0e12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --acc:#5aa9e6; --warm:#f0a050; --green:#5cc596; --violet:#c493dc; --ink:#aab4c0;
+  --white:#d9dee5; --black:#0b0e12; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,52px);line-height:1}
+h2{font-size:26px}
+h3{font-size:18px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:16px}
+.eyebrow{font-family:var(--font-data);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:10px}
+.sec{display:flex;flex-direction:column;gap:14px}
+.jump{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px}
+.jump button{all:unset;cursor:pointer;font:600 14px var(--font-body);color:var(--acc);border-bottom:1px solid transparent}
+.jump button:hover{border-bottom-color:var(--acc)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;align-items:start}
+.tool{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.desk{display:flex;flex-direction:column;gap:10px}
+.desk h3{color:var(--green)}
+.desk ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.desk li{border-left:3px solid var(--green);padding-left:12px;font-size:14.5px}
+.src{font-family:var(--font-data);font-size:12px;color:var(--muted)}
+.std{font-family:var(--font-data);font-size:12px;color:var(--warm)}
+.opt{font:600 14px var(--font-body);border:1px solid var(--rule);background:var(--panel);color:var(--fg);border-radius:6px;padding:6px 12px;cursor:pointer}
+.opt[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.big{font:500 34px var(--font-data);line-height:1.1;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 12px var(--font-data);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{font-family:var(--font-data);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* keyboard */
+.kb{position:relative;height:150px;user-select:none}
+.kw,.kk{position:absolute;top:0;border:1px solid var(--ink);cursor:pointer;padding:0;font:500 11px var(--font-data);display:flex;align-items:flex-end;justify-content:center}
+.kw{height:150px;background:var(--white);color:var(--black);border-radius:0 0 5px 5px;padding-bottom:6px}
+.kk{height:92px;background:var(--black);color:var(--white);z-index:2;border-radius:0 0 4px 4px;padding-bottom:4px;font-size:9px}
+.kw[aria-pressed="true"],.kk[aria-pressed="true"]{background:var(--warm);color:var(--bg)}
+.kinfo{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:flex-end}
+.kinfo div{display:flex;flex-direction:column}
+.ranges{display:flex;flex-direction:column;gap:6px}
+.rg{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;align-items:center;font-size:13px}
+.rg .bar{position:relative;height:12px;background:var(--grid);border-radius:6px}
+.rg .bar i{position:absolute;top:0;bottom:0;border-radius:6px;background:var(--acc);opacity:.75}
+.rg .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--warm)}
+
+/* tempo */
+.tempo{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.tempo input[type=number]{width:84px;font:500 22px var(--font-data);padding:4px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--fg)}
+.tempo input[type=range]{flex:1;min-width:160px;accent-color:var(--acc)}
+.tap{font:600 16px var(--font-body);padding:10px 22px;border-radius:8px;border:0;background:var(--acc);color:var(--bg);cursor:pointer}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.dl div{border-top:2px solid var(--rule);padding-top:6px;display:flex;flex-direction:column}
+.dl b{font:500 22px var(--font-data);font-variant-numeric:tabular-nums}
+.dl span{font-size:13px;color:var(--muted)}
+.dl .hl{border-top-color:var(--acc)}
+
+/* keys */
+.chords{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.ch{border:1px solid var(--rule);border-radius:8px;padding:8px 4px;text-align:center;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ch .rn{font:600 13px var(--font-data);color:var(--muted)}
+.ch .nm{font:600 22px var(--font-display)}
+.ch .fn{font-size:11px;color:var(--muted)}
+.ch.T{border-color:var(--green)} .ch.PD{border-color:var(--acc)} .ch.D{border-color:var(--warm)}
+.schemas{display:flex;flex-direction:column;gap:8px}
+.sch{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;font-size:14px;align-items:baseline}
+.sch b{font-weight:600}
+.sch code{font:500 14px var(--font-data)}
+.sch span{color:var(--muted);font-size:13px}
+
+/* form */
+.timeline{display:flex;gap:3px;align-items:flex-end;height:120px}
+.blk{flex:1;min-width:0;border:0;border-radius:4px 4px 0 0;cursor:pointer;font:600 12px var(--font-data);color:var(--bg);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+.blk[aria-pressed="true"]{outline:2px solid var(--fg);outline-offset:2px}
+.blk.I,.blk.O{background:var(--ink)} .blk.V{background:var(--acc)} .blk.P{background:var(--violet)} .blk.C{background:var(--warm)} .blk.B{background:var(--green)} .blk.Z{background:var(--violet)}
+.formout{display:flex;flex-direction:column;gap:6px}
+.formout b{font-family:var(--font-display);font-size:22px;font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px 24px}
+.card{border-left:3px solid var(--rule);padding:2px 0 2px 12px;display:flex;flex-direction:column;gap:3px}
+.card b{font-weight:600}
+.card span{color:var(--muted);font-size:14px}
+footer{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){
+  .chords{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sch{grid-template-columns:minmax(0,1fr);gap:2px}
+  .rg{grid-template-columns:96px minmax(0,1fr)}
+  .kk{font-size:0}
+}
+.iconbtn{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid transparent;background:color-mix(in srgb,var(--bg) 85%,transparent);color:var(--muted);cursor:pointer}
+.iconbtn:hover{color:var(--fg);border-color:var(--rule)}
+.iconbtn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<style>
+/* the base rules a bare page needs outside the artifact viewer */
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.gcnav{display:flex;align-items:center;gap:6px 18px;min-height:54px;box-sizing:border-box;background:var(--panel);border-bottom:1px solid var(--rule);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(56px,calc(env(safe-area-inset-right,0px) + 46px));padding-top:env(safe-area-inset-top,0px)}
+.gcnav a{color:var(--muted);text-decoration:none;white-space:nowrap;font:600 14px "Source Sans 3","Segoe UI",system-ui,sans-serif;padding:4px 2px;border-bottom:2px solid transparent}
+.gcnav a:hover{color:var(--fg)}.gcnav a:focus-visible,.gcnext a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.gcnav a.home{color:var(--fg);font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em;flex:none}
+.gcnav a[aria-current]{color:var(--fg);border-bottom-color:currentColor}
+.gcnav div{display:flex;gap:16px;min-width:0;overflow-x:auto;scrollbar-width:none}.gcnav div::-webkit-scrollbar{display:none}
+.gcnext{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1180px;box-sizing:border-box;margin:0 auto;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
+.gcnext a{color:var(--fg);text-decoration:none;font:700 19px "Barlow Condensed","Arial Narrow",sans-serif}.gcnext a:hover{text-decoration:underline}
+.gcnext small{display:block;color:var(--muted);font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+.gcnext a:last-child{text-align:right;margin-left:auto}
+</style>
+
+<button type="button" class="iconbtn" id="theme"></button>
+<nav class="gcnav" aria-label="Gain Changer pages"><a class="home" href="index.html">Gain Changer</a><div><a href="signal-flow.html">Signal flow</a><a href="pan-balance.html">Pan &amp; balance</a><a href="magic-frequencies.html">EQ</a><a href="compression-map.html">Compression</a><a href="effects-map.html">Effects</a><a href="mastering-map.html">Mastering</a><a href="desk-theory.html" aria-current="page">Theory</a><a href="mix-trainer.html">Mix Trainer</a></div></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 7 of 8 · Open Music Theory + mixing books</div>
+  <h1>Theory for the Sound Desk</h1>
+  <p class="lede">The music theory a sound engineer actually uses: note names and their frequencies, tempo and delay times, keys and chord numbers, and how a song is built so you know what is coming next. Each topic ends with what it means at the desk.</p>
+  <nav class="jump" aria-label="Sections"><button type="button" data-to="sec-notes">Notes &amp; frequency</button><button type="button" data-to="sec-tempo">Tempo &amp; delay times</button><button type="button" data-to="sec-keys">Keys &amp; chord numbers</button><button type="button" data-to="sec-form">Song form</button><button type="button" data-to="sec-endings">Endings</button><button type="button" data-to="sec-words">Band talk</button></nav>
+</header>
+
+<section class="sec" id="sec-notes" aria-label="Notes and frequency">
+  <h2>Notes &amp; frequency</h2>
+  <p>Letters A to G repeat every octave. A note's number says which octave it is in, and the number changes at C: middle C is C4, and the B just below it is B3 (Open Music Theory). An octave up doubles the frequency, so the same note name sits at 55, 110, 220 and 440 Hz.</p>
+  <div class="two">
+    <div class="tool">
+      <div class="row"><span class="eyebrow">Octave</span><span class="row" id="octs"></span></div>
+      <div class="kb" id="kb" role="group" aria-label="Keyboard, two octaves"></div>
+      <div class="kinfo" id="kinfo" aria-live="polite"></div>
+      <h3>Lowest notes (fundamentals)</h3>
+      <div class="ranges" id="ranges"></div>
+      <div class="std">Frequencies use standard tuning (A4 = 440 Hz, equal temperament). They and the lowest notes are standard figures, not from the books.</div>
+    </div>
+    <div class="desk">
+      <h3>At the desk</h3>
+      <ul>
+        <li>Musicians say "the low E is booming"; the EQ wants a frequency. Tap the note to find it. A bass's low E is about 41 Hz; a guitar's low E is an octave up at about 82 Hz.</li>
+        <li>An octave is double the frequency. EQ widths are often measured in octaves, so a one-octave band at 200 Hz spans roughly 140–280 Hz.</li>
+        <li>Each note also has harmonics above its fundamental. That's why a bass still sounds on small speakers that can't play 41 Hz: you hear its upper harmonics.</li>
+        <li>Kick and bass share the lowest octave. The mixing books give that range to one of them (Savage: kick owns 60–80 Hz; Senior keeps sub-100 Hz on the main bass part). <span class="src">Savage, Senior</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-tempo" aria-label="Tempo and delay times">
+  <h2>Tempo &amp; delay times</h2>
+  <p>The beat is the steady pulse you tap your foot to; tempo is how many beats per minute (BPM). In 4/4 there are four beats to a bar, counted 1 + 2 + 3 + 4 +, with sixteenths counted 1 e + a. In 6/8 the beat splits into three: two beats of three eighths, counted 1-la-li 2-la-li (Open Music Theory).</p>
+  <div class="two">
+    <div class="tool">
+      <div class="tempo">
+        <button type="button" class="tap" id="tap">Tap tempo</button>
+        <label class="eyebrow" for="bpmn">BPM</label>
+        <input type="number" id="bpmn" min="40" max="220" value="72">
+        <input type="range" id="bpmr" min="40" max="220" value="72" aria-label="Tempo slider">
+      </div>
+      <div class="dl" id="dl"></div>
+      <div class="row" id="bars" style="font-size:14px;color:var(--muted)"></div>
+      <div class="src">Formula: quarter note (ms) = 60,000 ÷ BPM. Halve it for each shorter note, ×1.5 for dotted, ×0.667 for triplets. (Owsinski)</div>
+    </div>
+    <div class="desk">
+      <h3>At the desk</h3>
+      <ul>
+        <li>Delays timed to the tempo add depth without being noticed; they pulse with the music. Delays not in time stick out. <span class="src">Owsinski</span></li>
+        <li>If a quarter-note delay pushes the vocal too far back, try the eighth. <span class="src">Owsinski</span></li>
+        <li>Time a reverb to the song: feed it from the snare and set the decay so it just dies away by the next snare hit. <span class="src">Owsinski</span></li>
+        <li>Snare compressor release: let the level recover to 90–100% before the next backbeat (beats 2 and 4). <span class="src">Owsinski</span></li>
+        <li>Very short timed delays (8–16 ms) make a sound bigger or wider without being heard as echoes. <span class="src">Owsinski</span></li>
+        <li>Tap along with the drummer's hi-hat or the worship leader's strum for a few bars. The average settles quickly.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-keys" aria-label="Keys and chord numbers">
+  <h2>Keys &amp; chord numbers</h2>
+  <p>A key is the home note and the seven-note scale built on it. Number the scale's notes 1 to 7 and build a chord on each: the Roman numerals I to vii. Uppercase is major, lowercase is minor, and ° is diminished. In every major key the pattern is the same: I, IV and V major; ii, iii and vi minor; vii° diminished (Open Music Theory). That's why bands can call chords by number and change key without rewriting anything.</p>
+  <div class="two">
+    <div class="tool">
+      <div class="row"><span class="eyebrow">Key</span><span class="row" id="keys"></span></div>
+      <div class="chords" id="chords"></div>
+      <div class="row" style="gap:14px;font-size:13px;color:var(--muted)"><span><span style="color:var(--green)">■</span> Tonic: home</span><span><span style="color:var(--acc)">■</span> Predominant: moving away</span><span><span style="color:var(--warm)">■</span> Dominant: pulls home</span></div>
+      <h3>Common pop progressions in this key</h3>
+      <div class="schemas" id="schemas"></div>
+    </div>
+    <div class="desk">
+      <h3>At the desk</h3>
+      <ul>
+        <li>The home chord's root (the I) is the note the bass returns to most. In a church room, that low note and its octave are the ones most likely to boom.</li>
+        <li>Chords move tonic → predominant → dominant → tonic. A V chord sounds like it needs to resolve, so a song rarely ends on it. <span class="src">Open Music Theory</span></li>
+        <li>The relative minor shares the same notes as the major key: A minor with C major, E minor with G major. A song that "sounds sad" may still be in the same key on the chart. <span class="src">Open Music Theory</span></li>
+        <li>When the band changes key for the last chorus (modulation), every resonance you notched moves with it. Listen again.</li>
+        <li>Most worship and pop songs loop four chords. Once you hear the loop, you know when the next section will turn over.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-form" aria-label="Song form">
+  <h2>Song form</h2>
+  <p>Songs are built from sections, usually 8 to 24 bars each. Verse, prechorus, chorus and postchorus always come in that order when they appear, and the cycle repeats. The bridge usually comes once, before the last chorus (Open Music Theory). Tap a section.</p>
+  <div class="tool">
+    <div class="timeline" id="timeline" role="group" aria-label="A typical verse-chorus song"></div>
+    <div class="formout" id="formout" aria-live="polite"></div>
+  </div>
+  <h3>How to hear a section change coming</h3>
+  <div class="cards">
+    <div class="card"><b>Drum fill</b><span>The usual signal that a new section starts on the next downbeat.</span></div>
+    <div class="card"><b>Backing vocals come in</b><span>A strong sign of the chorus. Have the BV faders ready.</span></div>
+    <div class="card"><b>Rising register, more energy</b><span>The prechorus builds: shorter phrases, chords changing faster, leaving the home chord.</span></div>
+    <div class="card"><b>Lyrics repeat</b><span>A chorus keeps the same words each time; verses change them. The title line is usually in the chorus.</span></div>
+    <div class="card"><b>Instruments drop out</b><span>Thinning out is part of how songs signal the end, along with repeating the last chorus.</span></div>
+  </div>
+  <p class="src">Section cues: Open Music Theory, ch. 34 and 36.</p>
+</section>
+
+<section class="sec" id="sec-endings" aria-label="Endings">
+  <h2>Endings</h2>
+  <p>A cadence is the chord move at the end of a phrase. Knowing the difference between an open and a closed one tells you whether the song is finishing (Open Music Theory).</p>
+  <div class="tw"><table>
+    <thead><tr><th>You hear</th><th>Chords</th><th>Name</th><th>What it means at the desk</th></tr></thead>
+    <tbody>
+      <tr><td>Stops on a hanging chord</td><td class="n">… → V</td><td>Half cadence</td><td>Open. More is coming; don't pull faders.</td></tr>
+      <tr><td>Lands firmly home</td><td class="n">V → I</td><td>Authentic cadence</td><td>Closed. The strongest version (bass and melody both on the home note) is how songs end.</td></tr>
+      <tr><td>Expected home, went somewhere sad</td><td class="n">V → vi</td><td>Deceptive</td><td>Avoids the ending. Often extends the last chorus once more.</td></tr>
+      <tr><td>The "amen" sound</td><td class="n">IV → I</td><td>Plagal</td><td>Common in hymns and worship tags. Usually an extension after the main ending.</td></tr>
+      <tr><td>Heroic, rising finish</td><td class="n">♭VI → ♭VII → I</td><td>Aeolian cadence</td><td>A big climax ending. Let the reverb tail ring.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="sec" id="sec-words" aria-label="Band talk">
+  <h2>Band talk</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Word</th><th>Means</th></tr></thead>
+    <tbody id="words"></tbody>
+  </table></div>
+</section>
+
+<footer>
+  <span>Theory: Open Music Theory (Gotham et al., CC BY-SA), Parts I, IV and VII. Desk notes: Owsinski, Savage, Senior and Benediktsson, as credited inline. Notes without a credit are practical advice, not from the books.</span>
+  <span>Frequencies and instrument lowest notes are standard reference figures (A4 = 440 Hz), not taken from the books.</span>
+</footer>
+</div>
+
+<script>
+/* light / dark toggle: follows the device until clicked, then remembered here when storage allows */
+(function(){const btn=document.getElementById("theme");
+  const SUN='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
+  const MOON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  const cur=()=>document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const set=(t,save)=>{document.documentElement.dataset.theme=t;btn.innerHTML=t==="dark"?SUN:MOON;const l=t==="dark"?"Switch to light mode":"Switch to dark mode";btn.setAttribute("aria-label",l);btn.title=l;if(save)try{localStorage.setItem("guide-theme",t)}catch(e){}};
+  let s=null;try{s=localStorage.getItem("guide-theme")}catch(e){}
+  set(s==="light"||s==="dark"?s:cur());btn.addEventListener("click",()=>set(cur()==="dark"?"light":"dark",true))})();
+const NAMES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+const hz=m=>440*Math.pow(2,(m-69)/12);
+const fhz=f=>f>=1000?(f/1000).toFixed(2)+" kHz":(f<100?f.toFixed(1):Math.round(f))+" Hz";
+let oct=2,sel=40;
+function kb(){
+  document.getElementById("octs").innerHTML=[0,1,2,3,4,5,6].map(o=>`<button type="button" class="opt" data-o="${o}" aria-pressed="${o===oct}">${o}–${o+1}</button>`).join("");
+  const base=12*(oct+1),wk=[0,2,4,5,7,9,11],W=100/14;let h="",wi=0;
+  for(let i=0;i<24;i++){const m=base+i,pc=i%12,o=Math.floor(m/12)-1;
+    if(wk.includes(pc)){h+=`<button type="button" class="kw" data-m="${m}" aria-pressed="${m===sel}" aria-label="${NAMES[pc]}${o}" style="left:${wi*W}%;width:${W}%">${pc===0?"C"+o:""}</button>`;wi++}
+    else h+=`<button type="button" class="kk" data-m="${m}" aria-pressed="${m===sel}" aria-label="${NAMES[pc]}${o}" style="left:${wi*W-W*0.3}%;width:${W*0.6}%">${NAMES[pc]}</button>`}
+  document.getElementById("kb").innerHTML=h;
+  const pc=sel%12,o=Math.floor(sel/12)-1,f=hz(sel);
+  document.getElementById("kinfo").innerHTML=`<div><span class="eyebrow">Note</span><span class="big">${NAMES[pc]}${o}</span></div><div><span class="eyebrow">Fundamental</span><span class="big">${fhz(f)}</span></div><div><span class="eyebrow">Octave below / above</span><span style="font:500 16px var(--font-data)">${fhz(f/2)} · ${fhz(f*2)}</span></div>`;
+  const lo=Math.log(25),hi=Math.log(4400),x=v=>((Math.log(v)-lo)/(hi-lo)*100).toFixed(2);
+  document.getElementById("ranges").innerHTML=RANGES.map(([n,a,b])=>`<div class="rg"><span>${n} <span class="src">${NAMES[a%12]}${Math.floor(a/12)-1}</span></span><span class="bar"><i style="left:${x(hz(a))}%;width:${x(hz(b))-x(hz(a))}%"></i><b style="left:${x(f)}%"></b></span></div>`).join("")+
+    `<div class="rg"><span></span><span class="src" style="display:flex;justify-content:space-between"><span>25 Hz</span><span>440</span><span>4.4 kHz</span></span></div>`;
+}
+/* lowest–highest fundamentals, MIDI numbers (standard ranges) */
+const RANGES=[["Bass guitar (4-string)",28,67],["Guitar",40,88],["Piano",21,108],["Male voice (typical)",40,67],["Female voice (typical)",53,79]];
+document.getElementById("octs").addEventListener("click",e=>{const b=e.target.closest("[data-o]");if(b){oct=+b.dataset.o;sel=12*(oct+1)+4;kb()}});
+document.getElementById("kb").addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(b){sel=+b.dataset.m;kb()}});
+
+/* tempo */
+let bpm=72,taps=[];
+const DL=[["Quarter",1,"1 beat"],["Eighth",.5,"½ beat"],["Dotted eighth",.75,"¾ beat"],["Sixteenth",.25,"¼ beat"],["Quarter triplet",2/3,"⅔ beat"],["Eighth triplet",1/3,"⅓ beat"],["Dotted quarter",1.5,"1½ beats"],["Half",2,"2 beats"]];
+function tempo(){
+  const q=60000/bpm;
+  document.getElementById("bpmn").value=bpm;document.getElementById("bpmr").value=bpm;
+  document.getElementById("dl").innerHTML=DL.map(([n,k,d],i)=>`<div class="${i<3?"hl":""}"><b>${Math.round(q*k)}</b><span>${n} · ${d}</span></div>`).join("");
+  const bar=q*4/1000;
+  document.getElementById("bars").innerHTML=`In 4/4: one bar = ${bar.toFixed(2)} s · an 8-bar section = ${Math.round(bar*8)} s · a 16-bar section = ${Math.round(bar*16)} s`;
+}
+const setB=v=>{v=Math.round(+v);if(v>=40&&v<=220){bpm=v;tempo()}};
+document.getElementById("bpmn").addEventListener("change",e=>setB(e.target.value));
+document.getElementById("bpmr").addEventListener("input",e=>setB(e.target.value));
+document.getElementById("tap").addEventListener("click",()=>{
+  const t=performance.now();if(taps.length&&t-taps[taps.length-1]>2000)taps=[];taps.push(t);if(taps.length>8)taps.shift();
+  if(taps.length>1){const avg=(taps[taps.length-1]-taps[0])/(taps.length-1);setB(Math.min(220,Math.max(40,60000/avg)))}
+});
+
+/* keys: spell the major scale by letter, then build triads */
+const LET="CDEFGAB",PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11},STEP=[0,2,4,5,7,9,11];
+const ACC={0:"",1:"♯",2:"𝄪",11:"♭",10:"𝄫"};
+const KEYS=["C","G","D","A","E","B","F","B♭","E♭","A♭","D♭"];
+let key="G";
+function note(tonic,deg,shift=0){
+  const l=LET.indexOf(tonic[0]),tpc=(PC[tonic[0]]+(tonic.includes("♯")?1:tonic.includes("♭")?-1:0)+12)%12;
+  const L=LET[(l+deg)%7],want=(tpc+STEP[deg]+shift+12)%12;return L+ACC[(want-PC[L]+12)%12];
+}
+const RN=[["I","",  "T"],["ii","m","PD"],["iii","m","T"],["IV","","PD"],["V","","D"],["vi","m","T"],["vii°","°","D"]];
+const FN={T:"tonic",PD:"predominant",D:"dominant"};
+const SCH=[["Four-chord","I–V–vi–IV","The most common loop. Also heard as vi–IV–I–V."],["Doo-wop","I–vi–IV–V","Home is approached from V."],["Hopscotch","IV–V–vi–I","Step, step, skip. Common since about 2010."],["Plagal vamp","I–IV","Gospel, soul and worship vamps."],["Double plagal","♭VII–IV–I","A rock build into the home chord."],["12-bar blues","I–IV–V","Over 12 bars."]];
+function chordName(r){const i=["I","ii","iii","IV","V","vi","vii°"].indexOf(r);if(r==="♭VII")return note(key,6,-1);return note(key,i)+RN[i][1]}
+function keys(){
+  document.getElementById("keys").innerHTML=KEYS.map(k=>`<button type="button" class="opt" data-k="${k}" aria-pressed="${k===key}">${k}</button>`).join("");
+  document.getElementById("chords").innerHTML=RN.map(([r,q,f],i)=>`<div class="ch ${f}"><span class="rn">${r}</span><span class="nm">${note(key,i)}${q}</span><span class="fn">${FN[f]}</span></div>`).join("");
+  document.getElementById("schemas").innerHTML=`<div class="sch"><b>Relative minor</b><code>${note(key,5)}m</code></div>`+SCH.map(([n,p,d])=>`<div class="sch"><b>${n}</b><div><code>${p.split("–").map(chordName).join(" – ")}</code> <span>${p} · ${d}</span></div></div>`).join("");
+}
+document.getElementById("keys").addEventListener("click",e=>{const b=e.target.closest("[data-k]");if(b){key=b.dataset.k;keys()}});
+
+/* form: a verse-chorus song; heights = typical energy */
+const SEC={
+ I:["Intro","Starts the song, often previews the chorus music. Usually short and instrumental.","Get the band balance and the leader's level set before the first line."],
+ V:["Verse","Tells the story; the words change each time. Lower energy, usually on the home chord.","Lead vocal on top and clear. Leave headroom: the chorus will be bigger."],
+ P:["Prechorus","Builds energy: shorter phrases, chords leave home, register rises.","Get ready for the chorus. Watch for the drum fill."],
+ C:["Chorus","The hook and title line, same words every time. Peak energy, higher register, backing vocals.","Bring in the BVs. Balance the mix here first: the books build the static balance at the loudest section, usually the last chorus (Benediktsson)."],
+ Z:["Postchorus","A short section that closes the cycle.","Often an instrumental hook. Let it breathe before the next verse."],
+ B:["Bridge","Contrast. Usually once, before the last chorus. Can change chords or feel.","Things may drop down or change. Listen before moving faders."],
+ O:["Outro","Winds the song down: repeated chorus, thinning texture or a fade.","Follow the band down. Leave the last reverb tail to ring out."]
+};
+const SONG=[["I",30],["V",45],["P",62],["C",88],["V",50],["P",66],["C",92],["B",58],["C",100],["Z",80],["O",40]];
+let fs=3;
+function form(){
+  document.getElementById("timeline").innerHTML=SONG.map(([k,h],i)=>`<button type="button" class="blk ${k}" data-f="${i}" aria-pressed="${i===fs}" aria-label="${SEC[k][0]}" style="height:${h}%">${k}</button>`).join("");
+  const s=SEC[SONG[fs][0]];
+  document.getElementById("formout").innerHTML=`<b>${s[0]}</b><span>${s[1]}</span><span style="color:var(--green)"><strong>At the desk:</strong> ${s[2]}</span>`;
+}
+document.getElementById("timeline").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){fs=+b.dataset.f;form()}});
+
+const WORDS=[["Bar / measure","One group of beats, usually four. Sections are counted in bars."],["Downbeat","Beat 1 of the bar, the strongest."],["Backbeat","Beats 2 and 4, where the snare usually hits."],["Pickup","Notes before the first full bar (anacrusis)."],["Syncopation","Notes landing between the beats instead of on them."],["4/4, 3/4, 6/8","Beats per bar and the beat's note value. 6/8 is two beats, each split in three."],["Key","The home note and its scale. \"In G\" means G is home."],["The one / the five","Chords by number: I = home chord, V = the chord that pulls home."],["Relative minor","The minor key with the same notes: E minor for G major."],["Modulation","Changing key, often up for the last chorus."],["Turnaround","A chord at the end of a section that leads back to the start."],["Vamp","Repeating a short chord loop, often two chords, while something happens."],["Tag","Repeating the last line to end the song."],["Slash chord","G/B means a G chord with B in the bass."],["Octave","The same note name at double (or half) the frequency."],["Interval","The distance between two notes, counted in half steps: 12 = octave, 7 = fifth."]];
+document.getElementById("words").innerHTML=WORDS.map(([w,m])=>`<tr><td><b>${w}</b></td><td>${m}</td></tr>`).join("");
+
+document.querySelector(".jump").addEventListener("click",e=>{const b=e.target.closest("[data-to]");if(b)document.getElementById(b.dataset.to).scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})});
+kb();tempo();keys();form();
+</script>
+
+<nav class="gcnext" aria-label="Previous and next page"><a href="mastering-map.html"><small>Previous</small>← Mastering Map</a><a href="mix-trainer.html"><small>Next</small>Mix Trainer →</a></nav>
+</html>

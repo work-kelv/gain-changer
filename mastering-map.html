@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mastering Map · Gain Changer</title>
+<meta name="description" content="Getting a finished mix ready for its listeners: level, tone, limiting and delivery.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23101318'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23f2b33d' stroke-width='3'/%3E%3Cpath d='M16 16 22 9' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sister page to the EQ, Compression, Pan and Effects maps. A limiter bench on top (waveform before and after loudness normalisation), then the chain, EQ moves, workflow, fixes and delivery. */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --fg:#1b2129; --muted:#5d6672; --rule:#dde2e8; --grid:#e8ecf0; --sel:#eef2f7;
+  --wave:#1f6fae; --limit:#c8452e; --ok:#2f7d5b; --warn:#a8710f; --ink:#3a4350;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --wave:#5aa9e6; --limit:#f0785c; --ok:#5cc596; --warn:#e0a93f; --ink:#aab4c0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --wave:#5aa9e6; --limit:#f0785c; --ok:#5cc596; --warn:#e0a93f; --ink:#aab4c0; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,52px);line-height:1}
+h2{font-size:26px}
+h3{font-size:20px}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:16px}
+.eyebrow{font-family:var(--font-data);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:10px}
+.sec{display:flex;flex-direction:column;gap:14px;min-width:0}
+.jump{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px}
+.jump button{all:unset;cursor:pointer;font:600 14px var(--font-body);color:var(--wave);border-bottom:1px solid transparent}
+.jump button:hover{border-bottom-color:var(--wave)}
+button:focus-visible,input:focus-visible,.jump button:focus-visible{outline:2px solid var(--wave);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.opt{font:600 14px var(--font-body);border:1px solid var(--rule);background:var(--panel);color:var(--fg);border-radius:6px;padding:7px 12px;cursor:pointer;text-align:left}
+.opt[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.src{font-family:var(--font-data);font-size:12px;color:var(--muted)}
+em.src{font-style:normal;margin-left:4px}
+
+/* bench */
+.bench{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:18px;align-items:start}
+.graphs{display:flex;flex-direction:column;gap:12px;min-width:0}
+.graphs svg{width:100%;height:auto;display:block}
+.graphs text{font:11px var(--font-data);fill:var(--muted)}
+.ghead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--muted)}
+.ctl label b{font:500 13px var(--font-data);color:var(--fg)}
+.ctl input{width:100%;accent-color:var(--limit)}
+.reads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.read{background:var(--sel);border-radius:8px;padding:8px 10px;min-width:0}
+.read span{display:block;font-size:12.5px;color:var(--muted)}
+.read b{font:500 21px var(--font-data);font-variant-numeric:tabular-nums}
+.verdict{border-left:3px solid var(--ok);padding-left:10px;display:flex;flex-direction:column;gap:2px}
+.verdict.warn{border-left-color:var(--warn)}.verdict.bad{border-left-color:var(--limit)}
+.verdict b{font:600 19px var(--font-display)}
+.ruler{position:relative;height:42px;margin-top:2px}
+.ruler .bar{position:absolute;left:0;right:0;top:20px;height:4px;background:var(--rule);border-radius:2px}
+.ruler .m{position:absolute;top:14px;width:2px;height:16px;background:var(--muted);margin-left:-1px}
+.ruler .m.on{background:var(--ok);width:3px}
+.ruler .me{position:absolute;top:10px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--limit);border:2px solid var(--panel);transition:left .15s}
+.ruler .t{position:absolute;top:30px;transform:translateX(-50%);font:10.5px var(--font-data);color:var(--muted);white-space:nowrap}
+
+/* chain */
+.chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px}
+.st{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:1px;min-width:0}
+.st b{font:600 17px var(--font-display)}
+.st span{font-size:12.5px;color:var(--muted)}
+.st.opt2{border-style:dashed}
+.st[aria-pressed="true"]{border-color:var(--wave);box-shadow:inset 0 0 0 1px var(--wave)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:500 12px var(--font-data);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left}
+th,td{padding:7px 10px 7px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n{font-family:var(--font-data);font-size:13px;white-space:nowrap}
+
+/* eq */
+.eqg{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:18px;align-items:start}
+.eqg svg{width:100%;height:auto;display:block}
+.eqg svg text{font:11px var(--font-data);fill:var(--muted)}
+.moves{display:flex;flex-direction:column;gap:6px;min-width:0}
+
+/* lists */
+.steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;counter-reset:s}
+.steps li{counter-increment:s;display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px}
+.steps li::before{content:counter(s);font:600 26px var(--font-display);color:var(--limit);line-height:1}
+.check{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:4px 18px}
+.check label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;cursor:pointer}
+.check input{margin-top:4px;accent-color:var(--ok);flex:none}
+.fixout{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.fixout b{font:600 20px var(--font-display)}
+.alb svg{width:100%;height:auto;display:block}
+.alb svg text{font:11px var(--font-data);fill:var(--muted)}
+.notebox{background:var(--sel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+footer{font-size:13px;color:var(--muted)}
+.iconbtn{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid transparent;background:color-mix(in srgb,var(--bg) 85%,transparent);color:var(--muted);cursor:pointer}
+.iconbtn:hover{color:var(--fg);border-color:var(--rule)}
+.iconbtn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:reduce){.ruler .me{transition:none}}
+@media (max-width:860px){.bench,.eqg{grid-template-columns:minmax(0,1fr)}}
+</style>
+<style>
+/* the base rules a bare page needs outside the artifact viewer */
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.gcnav{display:flex;align-items:center;gap:6px 18px;min-height:54px;box-sizing:border-box;background:var(--panel);border-bottom:1px solid var(--rule);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(56px,calc(env(safe-area-inset-right,0px) + 46px));padding-top:env(safe-area-inset-top,0px)}
+.gcnav a{color:var(--muted);text-decoration:none;white-space:nowrap;font:600 14px "Source Sans 3","Segoe UI",system-ui,sans-serif;padding:4px 2px;border-bottom:2px solid transparent}
+.gcnav a:hover{color:var(--fg)}.gcnav a:focus-visible,.gcnext a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.gcnav a.home{color:var(--fg);font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em;flex:none}
+.gcnav a[aria-current]{color:var(--fg);border-bottom-color:currentColor}
+.gcnav div{display:flex;gap:16px;min-width:0;overflow-x:auto;scrollbar-width:none}.gcnav div::-webkit-scrollbar{display:none}
+.gcnext{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1180px;box-sizing:border-box;margin:0 auto;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
+.gcnext a{color:var(--fg);text-decoration:none;font:700 19px "Barlow Condensed","Arial Narrow",sans-serif}.gcnext a:hover{text-decoration:underline}
+.gcnext small{display:block;color:var(--muted);font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+.gcnext a:last-child{text-align:right;margin-left:auto}
+</style>
+
+<button type="button" class="iconbtn" id="theme"></button>
+<nav class="gcnav" aria-label="Gain Changer pages"><a class="home" href="index.html">Gain Changer</a><div><a href="signal-flow.html">Signal flow</a><a href="pan-balance.html">Pan &amp; balance</a><a href="magic-frequencies.html">EQ</a><a href="compression-map.html">Compression</a><a href="effects-map.html">Effects</a><a href="mastering-map.html" aria-current="page">Mastering</a><a href="desk-theory.html">Theory</a><a href="mix-trainer.html">Mix Trainer</a></div></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 6 of 8 · finishing a recording · 7 mixing books</div>
+  <h1>Mastering Map</h1>
+  <p class="lede">Mastering makes a finished mix ready for its listeners. It evens out level and tone across songs and prepares the files. It can't create what isn't in the mix. Savage's default chain is a transparent EQ and a brickwall limiter, and everything else is a specialty tool.</p>
+  <div class="jump">
+    <button type="button" data-to="sec-bench">Limiter bench</button>
+    <button type="button" data-to="sec-chain">The chain</button>
+    <button type="button" data-to="sec-eq">EQ moves</button>
+    <button type="button" data-to="sec-flow">Workflow</button>
+    <button type="button" data-to="sec-ready">Ready to master?</button>
+    <button type="button" data-to="sec-fix">Fixes</button>
+    <button type="button" data-to="sec-album">Album &amp; delivery</button>
+  </div>
+</header>
+
+<section class="sec" id="sec-bench" aria-label="Limiter bench">
+  <h2>Limiter bench</h2>
+  <p>Push the limiter and watch two things: what it shaves off the song, and what happens when a platform turns the result to its loudness target. Levels are simulated from an example worship song. No audio plays.</p>
+  <div class="row" id="presets"></div>
+  <div class="bench">
+    <div class="graphs">
+      <div class="card">
+        <div class="ghead"><h3>What the limiter does</h3><span class="src">red = shaved off · dashed = ceiling</span></div>
+        <svg id="wf" viewBox="0 0 760 210" role="img" aria-label="Waveform of the example song after the limiter, with the shaved peaks in red"></svg>
+      </div>
+      <div class="card">
+        <div class="ghead"><h3>What the listener gets</h3><span class="src" id="ntxt"></span></div>
+        <svg id="wn" viewBox="0 0 760 150" role="img" aria-label="Waveform after loudness normalisation"></svg>
+        <div class="row" id="plats"></div>
+        <div class="ruler" id="ruler" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctl"><label for="th">Limiter threshold (lower = louder)<b id="thv"></b></label><input type="range" id="th" min="-20" max="0" step="0.5" value="-7.5"></div>
+      <div class="ctl"><label for="ce">Output ceiling<b id="cev"></b></label><input type="range" id="ce" min="-3" max="0" step="0.1" value="-1"></div>
+      <div class="reads">
+        <div class="read"><span>Limiting on peaks</span><b id="rgr"></b></div>
+        <div class="read"><span>Master loudness</span><b id="rlu"></b></div>
+        <div class="read"><span>Chorus over verse</span><b id="rco"></b></div>
+        <div class="read"><span>Platform changes it</span><b id="rch"></b></div>
+      </div>
+      <div class="verdict" id="vd" aria-live="polite"></div>
+      <div class="verdict" id="vc"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-chain" aria-label="The chain">
+  <h2>The chain</h2>
+  <p>Signal runs left to right. Dashed stages are optional. Pick a stage to see the numbers.</p>
+  <div class="chain" id="chain"></div>
+  <div class="card" id="stage"></div>
+</section>
+
+<section class="sec" id="sec-eq" aria-label="EQ moves">
+  <h2>Mastering EQ moves</h2>
+  <p>A mastering EQ touches every instrument at once, so the moves are tiny. Savage rarely goes past ±2 dB in a whole session and hears 0.5 dB clearly. This graph only spans ±3 dB. The same scale would make a channel-EQ boost run off the chart.</p>
+  <div class="eqg">
+    <div class="card"><svg id="eqc" viewBox="0 0 600 240" role="img" aria-label="EQ curve of the selected mastering move"></svg></div>
+    <div class="moves">
+      <div class="row" id="moves"></div>
+      <div class="fixout" id="moveout"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-flow" aria-label="Workflow">
+  <h2>Savage's workflow</h2>
+  <p>Master one reference song, then match the rest to it. EQ comes before level because EQ changes level.</p>
+  <ol class="steps" id="steps"></ol>
+  <p><b>Match loudness, then judge.</b> Limiting, EQ boosts and analog simulators all add level, and louder reads as better. Turn the processed signal down to match before you decide. Savage repeats this "for the third time because it is that important". <em class="src">Savage, Senior, Oltheten</em></p>
+</section>
+
+<section class="sec" id="sec-ready" aria-label="Ready to master">
+  <h2>Ready to master?</h2>
+  <p>Tick these off before the mix leaves the desk. Your ticks stay on this device.</p>
+  <ul class="check" id="check"></ul>
+</section>
+
+<section class="sec" id="sec-fix" aria-label="Fixes">
+  <h2>Fixes</h2>
+  <div class="row" id="fixes"></div>
+  <div class="fixout" id="fixout"></div>
+</section>
+
+<section class="sec" id="sec-album" aria-label="Album and delivery">
+  <h2>Album &amp; delivery</h2>
+  <p>On an album, consistency governs every decision. Master on a timeline in song order, because each song is judged against what plays before and after it. Gaps work like musical rests.</p>
+  <div class="card alb">
+    <div class="ghead"><h3>Savage's energy sequence</h3><span class="src">12 songs, reconstructed from Savage's options; heights show energy</span></div>
+    <svg id="alb" viewBox="0 0 760 130" role="img" aria-label="Twelve songs in sequence, with gaps between them"></svg>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>What</th><th>Value</th><th>Book</th></tr></thead>
+    <tbody id="deliv"></tbody>
+  </table></div>
+  <div class="notebox">
+    <p><strong>Ceiling: the books disagree.</strong> Savage normally sets about −0.2 dBFS. Oltheten keeps peaks at −1 dBTP or lower for normalised streaming.</p>
+    <p><strong>How loud: the books disagree.</strong> Savage aims for "moderate", 3–6 dB of limiting. Oltheten uses no more limiting than the platform target needs. Valeriote takes approval mixes of heavy music to about −12 dB RMS. Senior gives no target and matches references by ear.</p>
+    <p><strong>Limiter on the mix: the books disagree.</strong> Oltheten delivers with no limiter and uses one only as a test. Savage says mixing through a limiter protects the kick and snare. Valeriote uses a temporary limiter for approval, then bypasses it before mastering.</p>
+    <p><strong>Chain order.</strong> Savage: filter, EQ, optional compression, limiter. Nyquist: EQ, bus compressor, limiter. Senior puts bus EQ after the bus compressor. Valeriote's buss chain has no EQ by default: compressor, then loudness.</p>
+    <p><strong>Dates.</strong> Savage's book is from 2014, and platform targets and upload formats change. Check each platform's current spec before you deliver. Owsinski's 1999 edition has no mastering chapter; Owsinski's part here is printing alternate mixes.</p>
+    <p><strong>At church (not from the books).</strong> These books are about recordings. Nothing here applies to the live room mix on a Sunday. Use this page for an EP, a song release, or a service recording you plan to publish.</p>
+  </div>
+</section>
+
+<footer id="srcs"></footer>
+</div>
+
+<script>
+/* light / dark toggle: follows the device until clicked, then remembered here when storage allows */
+(function(){const btn=document.getElementById("theme");
+  const SUN='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
+  const MOON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  const cur=()=>document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const set=(t,save)=>{document.documentElement.dataset.theme=t;btn.innerHTML=t==="dark"?SUN:MOON;const l=t==="dark"?"Switch to light mode":"Switch to dark mode";btn.setAttribute("aria-label",l);btn.title=l;if(save)try{localStorage.setItem("guide-theme",t)}catch(e){}};
+  let s=null;try{s=localStorage.getItem("guide-theme")}catch(e){}
+  set(s==="light"||s==="dark"?s:cur());btn.addEventListener("click",()=>set(cur()==="dark"?"light":"dark",true))})();
+
+const SRC={OW:"Owsinski · Mixing Engineer's Handbook",SE:"Senior · Mixing Secrets",OL:"Oltheten · Mixing with Impact",SA:"Savage · Mixing & Mastering In the Box",NY:"Nyquist · The Bus Compression Framework",BS:"Benediktsson · Step By Step Mixing",CL:"Clarke · 56 Mix Tips",VA:"Valeriote · Mixing Heavy Music"};
+const srcs=s=>s.split(" ").map(k=>SRC[k].split(" · ")[0]).join(", ");
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sg=(v,d=1)=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d);
+const dbs=(v,d=1)=>(v<0?"−":"")+Math.abs(v).toFixed(d);
+const lin=d=>Math.pow(10,d/20);
+const $=id=>document.getElementById(id);
+
+/* ---------- simulated song: peak and average level per column, mix peaks at −3 dBFS and reads −18 LUFS ---------- */
+const SECS=[["Intro",.08,-15,8],["Verse",.17,-10,11],["Chorus",.17,-5.5,10],["Verse",.13,-10,11],["Chorus",.17,-5.5,10],["Bridge",.09,-13,9],["Last chorus",.19,-3,10]];
+const N=300,COL=[];
+(function(){let s=20261104;const R=()=>{s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};
+  SECS.forEach(([n,w,b,cr],k)=>{const m=Math.round(w*N);for(let i=0;i<m&&COL.length<N;i++){const r=R();COL.push({k,p:b-Math.pow(r,.6)*7,r:b-cr+(R()-.5)*1.2})}});
+  while(COL.length<N)COL.push({...COL[COL.length-1]});
+  const mx=Math.max(...COL.map(c=>c.p));COL.forEach(c=>{c.p+=-3-mx;c.r+=-3-mx})})();
+const rawL=rs=>{const e=rs.map(r=>Math.pow(10,r/10)),m=e.reduce((a,b)=>a+b,0)/e.length,gate=m/10,g=e.filter(x=>x>=gate);return 10*Math.log10(g.reduce((a,b)=>a+b,0)/g.length)};
+const K=-18-rawL(COL.map(c=>c.r));
+/* a limiter holds the average down less than the peaks: 0.45 of the peak reduction reaches it */
+function calc(T,C){
+  const g=C-T,cols=COL.map(c=>{const inp=c.p+g,gr=Math.max(0,inp-C);return{k:c.k,inp,out:inp-gr,gr,r:c.r+g-gr*.45}});
+  const lufs=rawL(cols.map(c=>c.r))+K,mean=ks=>{const a=cols.filter(c=>ks.includes(c.k)).map(c=>Math.pow(10,c.r/10));return 10*Math.log10(a.reduce((x,y)=>x+y,0)/a.length)};
+  return{cols,lufs,gr:Math.max(...cols.map(c=>c.gr)),peak:Math.max(...cols.map(c=>c.out)),contrast:mean([2,4,6])-mean([1,3])};
+}
+/* a platform turns a loud master down; it only turns a quiet one up as far as peaks stay under −1 dBTP */
+function norm(r,t){const want=t-r.lufs,room=-1-r.peak,ch=want>0?Math.min(want,Math.max(0,room)):want;return{ch,want,short:want-ch}}
+
+const PLATS=[["Spotify / Tidal",-14,"OL"],["iTunes Sound Check",-16,"OL"],["TV Europe (EBU R128)",-23,"OL"],["TV US (ATSC A/85)",-24,"OL"]];
+let plat=0,T=-7.5,C=-1,pre=1;
+const streamT=()=>{for(let t=-3;t>=-20;t-=.5)if(calc(t,-1).lufs>=-14)return t;return -20};
+const PRE=[["Mix as delivered",()=>[-3,-3]],["Savage's moderate master",()=>[-7.5,-.2]],["Aim at −14 (Oltheten)",()=>[streamT(),-1]],["Sparse acoustic song",()=>[-7.5,-1.5]],["Loudness war",()=>[-16,-.2]]];
+
+function wave(id,cols,key,W,H,ceil,extra){
+  const m=H/2,L=30,pw=W-L-4,sc=(H/2-8)/1.25,x=i=>L+i/(cols.length-1)*pw,y=v=>sc*Math.min(1.25,lin(v));
+  const area=f=>{let t="",b="";cols.forEach((c,i)=>{const a=y(f(c));t+=(i?"L":"M")+x(i).toFixed(1)+" "+(m-a).toFixed(1);b=`L${x(i).toFixed(1)} ${(m+a).toFixed(1)}`+b});return t+b+"Z"};
+  let o="";
+  for(const d of [0,-6,-12]){const a=sc*lin(d);o+=`<line x1="${L}" x2="${W-4}" y1="${m-a}" y2="${m-a}" stroke="var(--grid)"/><line x1="${L}" x2="${W-4}" y1="${m+a}" y2="${m+a}" stroke="var(--grid)"/><text x="${L-4}" y="${m-a+4}" text-anchor="end">${d?dbs(d,0):"0"}</text>`}
+  o+=extra||"";
+  o+=`<path d="${area(c=>c[key])}" fill="var(--wave)"/>`;
+  if(ceil!=null){const a=sc*lin(ceil);o+=`<line x1="${L}" x2="${W-4}" y1="${m-a}" y2="${m-a}" stroke="var(--fg)" stroke-dasharray="5 4"/><line x1="${L}" x2="${W-4}" y1="${m+a}" y2="${m+a}" stroke="var(--fg)" stroke-dasharray="5 4"/>`}
+  return o;
+}
+function secLabels(W){let o="",at=0;const L=30,pw=W-L-4;SECS.forEach(([n,w])=>{const x=L+at*pw;o+=`<line x1="${x}" x2="${x}" y1="0" y2="10" stroke="var(--rule)"/>`;if(w>=.09)o+=`<text x="${x+3}" y="9">${n}</text>`;at+=w});return o}
+function ghost(cols,W,H){const m=H/2,L=30,pw=W-L-4,sc=(H/2-8)/1.25,x=i=>L+i/(cols.length-1)*pw,y=v=>sc*Math.min(1.25,lin(v));let t="",b="";cols.forEach((c,i)=>{const a=y(c.inp);t+=(i?"L":"M")+x(i).toFixed(1)+" "+(m-a).toFixed(1);b=`L${x(i).toFixed(1)} ${(m+a).toFixed(1)}`+b});return `<path d="${t+b}Z" fill="var(--limit)"/>`}
+
+function bench(){
+  const r=calc(T,C),P=PLATS[plat],n=norm(r,P[1]);
+  $("thv").textContent=dbs(T)+" dB";$("cev").textContent=dbs(C)+" dBFS";
+  $("rgr").textContent=r.gr.toFixed(1)+" dB";$("rlu").textContent=dbs(r.lufs)+" LUFS";$("rco").textContent=sg(r.contrast)+" dB";$("rch").textContent=sg(n.ch)+" dB";
+  $("wf").innerHTML=secLabels(760)+wave("wf",r.cols,"out",760,210,C,ghost(r.cols,760,210));
+  const heard=r.cols.map(c=>({v:c.out+n.ch}));
+  $("wn").innerHTML=wave("wn",heard,"v",760,150,-1);
+  $("ntxt").textContent=`dashed = −1 dBTP · target ${dbs(P[1],0)} LUFS`;
+  const v=$("vd");const [cl,h,s,src]=r.gr<.5?["warn","No limiting","Savage: with none, a track sounds small in a playlist. It suits a mix going to a mastering engineer.","SA"]:r.gr<3?["","Light limiting","Less than Savage's usual range, which suits purist folk and jazz.","SA"]:r.gr<=6?["","Moderate: 3–6 dB on peaks","Savage's usual range: competitive enough, without crushing the music.","SA"]:r.gr<=10?["warn","Heavy limiting","More impact, less breath. Savage goes here when the client wants maximum impact. Watch kick and snare.","SA"]:["bad","Crushed","Fatigue sets in and the verse-to-chorus lift shrinks. Valeriote warns of tiring listeners by track 5 or 6.","SA VA"];
+  v.className="verdict "+cl;v.innerHTML=`<b>${h}</b><span>${s} <em class="src">${srcs(src)}</em></span>`;
+  const w=$("vc");const [c2,h2,s2]=n.want<-.5?[n.want<-4?"bad":"warn",`Turned down ${Math.abs(n.ch).toFixed(1)} dB`,`Oltheten: over-limited masters get turned down and sound duller and softer. The limiting only cost you dynamics${n.want<-4?", with headroom left unused":""}.`]:n.short>.5?["warn",`Stops ${n.short.toFixed(1)} dB short of the target`,"The peaks reach −1 dBTP before the loudness reaches the target, so this model stops there. Add a little limiting."]:["",`On target for ${P[0]}`,"Peaks stay under −1 dBTP with no more limiting than the target needs."];
+  w.className="verdict "+c2;w.innerHTML=`<b>${h2}</b><span>${s2} <em class="src">Oltheten</em></span>`;
+  $("ruler").innerHTML=(()=>{const X=l=>(clamp(l,-26,-4)+26)/22*100;return `<span class="bar"></span>`+PLATS.map(([n2,l],i)=>`<span class="m${i===plat?" on":""}" style="left:${X(l)}%"></span>`).join("")+[[-24],[-14],[-6]].map(([l])=>`<span class="t" style="left:${X(l)}%">${dbs(l,0)}</span>`).join("")+`<span class="me" style="left:${X(r.lufs)}%" title="This master"></span>`})();
+}
+function btns(){
+  $("presets").innerHTML=PRE.map(([n],i)=>`<button type="button" class="opt" data-p="${i}" aria-pressed="${i===pre}">${n}</button>`).join("");
+  $("plats").innerHTML=PLATS.map(([n,l],i)=>`<button type="button" class="opt" data-l="${i}" aria-pressed="${i===plat}">${n} ${dbs(l,0)}</button>`).join("");
+}
+function sync(){$("th").value=T;$("ce").value=C;btns();bench()}
+$("presets").addEventListener("click",e=>{const b=e.target.closest("[data-p]");if(b){pre=+b.dataset.p;[T,C]=PRE[pre][1]();sync()}});
+$("plats").addEventListener("click",e=>{const b=e.target.closest("[data-l]");if(b){plat=+b.dataset.l;sync()}});
+$("th").addEventListener("input",e=>{T=+e.target.value;pre=-1;btns();bench()});
+$("ce").addEventListener("input",e=>{C=+e.target.value;pre=-1;btns();bench()});
+
+/* ---------- chain ---------- */
+const CHAIN=[
+ {n:"Finished mix",s:"Starts here",why:"Oltheten: deliver a mix as close as possible to the intended result, except for absolute loudness. Nyquist: if the track isn't 90% there from the mix, no master chain will save it.",
+  r:[["Peak level","−10 to −3 dBFS, no peak limiting","OL"],["Peak level","no higher than −3 dBFS","CL"],["File","interleaved WAV or AIFF, 24-bit or 32-bit float, project sample rate","OL"],["Bus compression","keep the one you mixed into","OL"]]},
+ {n:"Cleanup filter",s:"Lows and hum",why:"Savage runs a high-pass as a default, even with no DC offset detected. It removes DC and subsonic junk. The rumble and hum moves are only for when those problems exist.",
+  r:[["Subsonic / DC","high-pass 22 Hz, Q 6.5, variable slope","SA"],["Rumble","low shelf 53 Hz, Q 3.83, −8 dB (can affect kick and bass)","SA"],["60 Hz hum","notch 60 Hz, −18 dB, Q 6.5","SA"]]},
+ {n:"EQ",s:"Small and broad",why:"Savage's two goals are sounds best, which is an equalised balance, and matches best, which fits the songs around it. They can conflict, so choose the best compromise. See EQ moves below.",
+  r:[["Size of move","mostly 1 dB or less; rarely past ±2 dB in a session","SA"],["Resolution","0.5 dB is clearly audible; fine-tune in 0.1 dB steps","SA"],["Width","broad Q and gentle shelves","SA SE"],["Tool","transparent; at least 5 parametric bands plus high- and low-pass","SA"]]},
+ {n:"Bus compression",s:"Usually skip",o:1,why:"Savage assumes it happened in the mix, and the limiter already compresses. Use it only if a track sounds weak or for matching. Gentle compression plus gentle limiting beats a stronger dose of either.",
+  r:[["Nyquist's master tickle","10–30 ms attack, 0.1–0.3 s release, 2:1, 0.5–1 dB reduction","NY"],["Senior's glue","up to 2–3 dB, ratio 1.1:1–2:1, slow attack, auto release","SE"],["Multiband","problem-solving only, never a standard stage","SA"]]},
+ {n:"Brickwall limiter",s:"Sets the level",why:"The threshold sets how much limiting you get, and so the loudness. The ceiling sets the highest peak. Savage treats them as separate dials: intensity for character, ceiling for perceived size. Automate the threshold per song.",
+  r:[["Limiting","3–6 dB on peaks; less for folk and jazz; more on request","SA"],["Ceiling, normal","about −0.2 dBFS","SA"],["Ceiling, streaming","−1 dBTP or lower","OL"],["Ceiling, solo acoustic among band songs","−1 to −2.5 dBFS","SA"]]},
+ {n:"Dither",s:"Once, at the end",why:"Dither reduces distortion when bit depth is cut. Processing after dither raises distortion, so it happens once, at the final bounce.",
+  r:[["When","only at the final 24 to 16-bit bounce","SA"],["mp3","needs no dither","SA"]]},
+ {n:"Deliver",s:"Files and data",why:"A master is audio plus data. Listen all the way through what you send. Details are under Album & delivery.",
+  r:[["Streaming","highest quality accepted; preview the codec first","SA"],["Archive","always keep an unprocessed final","SE"]]}
+];
+let stg=4;
+function chain(){
+  $("chain").innerHTML=CHAIN.map((c,i)=>`<button type="button" class="st${c.o?" opt2":""}" data-s="${i}" aria-pressed="${i===stg}"><b>${c.n}</b><span>${c.s}</span></button>`).join("");
+  const c=CHAIN[stg];$("stage").innerHTML=`<h3>${c.n}</h3><p>${c.why}</p><div class="tbl"><table><tbody>${c.r.map(([a,b,s])=>`<tr><td>${a}</td><td>${b}</td><td class="src">${srcs(s)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+$("chain").addEventListener("click",e=>{const b=e.target.closest("[data-s]");if(b){stg=+b.dataset.s;chain()}});
+
+/* ---------- EQ moves. k: b bell, hs high shelf, ls low shelf, hp high-pass, n notch ---------- */
+const MV=[
+ ["−1 dB at 300 Hz","b",300,-1,.8,"Savage's example of a broad cut: Q 0.8.","SA"],
+ ["+1 dB at 3 kHz","b",3000,1,1,"Savage calls this a pretty dramatic change. It moves vocals, backing vocals, guitars, keys and snare together.","SA"],
+ ["−0.7 dB at 125 Hz","b",125,-.7,1,"A song a touch boomy against the reference, from Savage's worked example. Broad.","SA"],
+ ["+1 dB at 10 kHz","b",10000,1,.8,"Savage's global sparkle, a move that can go on many or all songs.","SA"],
+ ["+0.5 dB high shelf","hs",8000,.5,1,"Valeriote allows +0.5–1 dB if the whole mix is slightly dark. Using the buss as a bandaid for one instrument is a warning sign.","VA"],
+ ["22 Hz high-pass","hp",22,0,6.5,"Savage's default cleanup filter. The audible range is untouched.","SA"],
+ ["Rumble shelf, 53 Hz","ls",53,-8,3.83,"−8 dB, for rumble only. It runs off this chart and can affect kick and bass.","SA"],
+ ["60 Hz hum notch","n",60,-18,6.5,"−18 dB at Q 6.5, Savage's narrowest. It runs off this chart.","SA"]
+];
+let mv=0;
+function curve(f,m){const [,k,f0,g,q]=m,o=Math.log2(f/f0);
+  if(k==="b")return g*Math.exp(-o*o*q*q*1.4);
+  if(k==="n")return g*Math.exp(-o*o*q*q*12);
+  if(k==="hs")return g/(1+Math.exp(-o*3));
+  if(k==="ls")return g/(1+Math.exp(o*q*1.6));
+  return o>=0?0:Math.max(-40,o*24)}
+function moves(){
+  const W=600,H=240,L=34,R=8,Tp=8,B=24,pw=W-L-R,ph=H-Tp-B,X=f=>L+Math.log10(f/20)/3*pw,Y=d=>Tp+ph/2-d/3*(ph/2);
+  let o="";for(const d of [-3,-2,-1,0,1,2,3])o+=`<line x1="${L}" x2="${W-R}" y1="${Y(d)}" y2="${Y(d)}" stroke="${d?"var(--grid)":"var(--ink)"}"/><text x="${L-5}" y="${Y(d)+4}" text-anchor="end">${d>0?"+":d<0?"−":""}${Math.abs(d)}</text>`;
+  for(const [f,l] of [[20,"20"],[100,"100"],[1000,"1k"],[10000,"10k"]])o+=`<line x1="${X(f)}" x2="${X(f)}" y1="${Tp}" y2="${Tp+ph}" stroke="var(--grid)"/><text x="${X(f)}" y="${H-7}" text-anchor="${f===20?"start":"middle"}">${l} Hz</text>`;
+  let d="";for(let x=0;x<=pw;x+=2){const f=20*Math.pow(1000,x/pw),g=curve(f,MV[mv]);d+=(x?"L":"M")+(L+x)+" "+clamp(Y(g),Tp,Tp+ph).toFixed(1)}
+  o+=`<path d="${d}" fill="none" stroke="var(--limit)" stroke-width="2.5"/>`;
+  $("eqc").innerHTML=o;
+  $("moves").innerHTML=MV.map((m,i)=>`<button type="button" class="opt" data-m="${i}" aria-pressed="${i===mv}">${m[0]}</button>`).join("");
+  $("moveout").innerHTML=`<b>${MV[mv][0]}</b><span>${MV[mv][5]}</span><span class="src">${srcs(MV[mv][6])}</span>`;
+}
+$("moves").addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(b){mv=+b.dataset.m;moves()}});
+
+/* ---------- lists ---------- */
+const FLOW=[
+ ["Pick the reference","Choose the song whose frequency balance sounds best before any processing."],
+ ["Set its sound and loudness","EQ it, then agree the loudness with the artist or producer. Savage's usual choice is moderate: 3–6 dB of limiting on peaks."],
+ ["Match the next song","Compare short bits, especially the loudest sections. Adjust EQ first, then the limiter threshold."],
+ ["Grow the reference pool","Each finished song joins the reference. Bounce around out of order, because the sequence may change."],
+ ["Check two level points","Match the lead vocal and the loudest section. When they conflict, find the best compromise."],
+ ["Listen quietly","For very different songs, listen at very low levels to balance them."]
+];
+$("steps").innerHTML=FLOW.map(([h,s])=>`<li><b>${h}</b><span>${s}</span></li>`).join("");
+const READY=[
+ ["The mix is finished, with no \"we'll fix it in mastering\"","OL SE"],
+ ["Peaks sit between −10 and −3 dBFS, with no limiter on the mix","OL"],
+ ["The bus compression is the one you mixed into, with nothing added afterwards","OL"],
+ ["No exciter or multiband on the mix bus","OL"],
+ ["It holds up in mono","OL"],
+ ["Proportions hold on different speakers and at different levels","OL"],
+ ["Compared with references at matched loudness","OL SE"],
+ ["Morning-after snag list done on a consumer player","SE"],
+ ["Vocal-up and vocal-down versions printed, within 1 dB","OW OL"],
+ ["Bounce checked: no muted channel, clear version names","OL"],
+ ["An unprocessed final is archived in two places","SE"]
+];
+let ticks={};try{ticks=JSON.parse(localStorage.getItem("mm-ready")||"{}")||{}}catch(e){}
+$("check").innerHTML=READY.map(([t,s],i)=>`<li><label><input type="checkbox" id="rd${i}" data-i="${i}"${ticks[i]?" checked":""}><span>${t} <em class="src">${srcs(s)}</em></span></label></li>`).join("");
+$("check").addEventListener("change",e=>{const i=e.target.dataset.i;if(i==null)return;ticks[i]=e.target.checked;try{localStorage.setItem("mm-ready",JSON.stringify(ticks))}catch(x){}});
+const FX=[
+ ["Kick and snare lost their punch","Transients trigger the limiter. Use less limiting. Savage says the mastering fixes (dynamic-EQ upper-mid boost, expansion, transient-preserving limiters) amount to remixing, so it's better to go back and mix through a limiter.","SA"],
+ ["Solo acoustic song is as loud as the band","Keep a similar amount of limiting, but lower the ceiling to about −1 to −2.5 dB. A singer with a guitar shouldn't sound as loud as a band.","SA"],
+ ["The intro feels too big next to the band","Limiting squashes the band entrance against a sparse intro. Automate the intro's volume down to restore the mix's relationship.","SA"],
+ ["Verses and choruses sound the same size","Use less limiting, which is often the most musical fix. You can also lower the quiet sections with automation or expansion.","SA"],
+ ["The vocals match, but one chorus jumps out","The two level criteria conflict. Adjust that song's limiter and vocal-range presence until both are acceptable.","SA"],
+ ["One song arrived already limited","Lower its output. Don't limit the other songs harder to catch up.","SA"],
+ ["It sounds dull on streaming","It was probably over-limited and turned down. Back off the limiter so the peaks have headroom after normalisation.","OL"],
+ ["It won't get loud","Suspect wasted energy: balance, masking, out-of-phase or too-wide parts, or frequencies doing no job. Oltheten uses a trial limiter to test for this. Senior says to change the mix, for example by giving the drums more sustain.","OL SE"],
+ ["A bright vocal, but the band needs its highs","Use one dynamic EQ band at the problem frequency, as narrow as works, reducing only when the vocal is present. Don't start with dynamic EQ, because instruments change from moment to moment.","SA"],
+ ["The master feels thin after a smile EQ","Mixers have often scooped the mids already. Losing too much midrange sounds thin and weak, so put some back.","SA"],
+ ["The mix itself is distorted or squashed","Do the minimum. Expansion can't remove pumping and EQ can't restore lost fidelity. Ask for a revised mix, tactfully.","SA"]
+];
+let fx=0;
+function fixes(){
+  $("fixes").innerHTML=FX.map((f,i)=>`<button type="button" class="opt" data-f="${i}" aria-pressed="${i===fx}">${f[0]}</button>`).join("");
+  $("fixout").innerHTML=`<b>${FX[fx][0]}</b><span>${FX[fx][1]}</span><span class="src">${srcs(FX[fx][2])}</span>`;
+}
+$("fixes").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){fx=+b.dataset.f;fixes()}});
+
+/* energy 3 up-tempo, 2 mid, 1 ballad; gap before the song: 0 none, 1 normal, 2 long */
+const ALB=[[3,1],[3,1],[3,1],[1,2],[2,1],[3,1],[3,0],[2,1],[1,2],[2,1],[3,1],[3,1]];
+(function(){const W=760,H=130,base=100;let x=6,o="";const u=(W-12-ALB.reduce((a,[,g])=>a+g*16,0))/ALB.length;
+  ALB.forEach(([e,g],i)=>{x+=g*16;const h=e*26;o+=`<rect x="${x}" y="${base-h}" width="${u-1}" height="${h}" rx="3" fill="var(--wave)" opacity="${e===1?.5:e===2?.72:1}"/><text x="${x+u/2}" y="${base+16}" text-anchor="middle">${i+1}</text>`;if(g===2)o+=`<text x="${x-8}" y="${base-84}" text-anchor="middle">long</text>`;if(i&&g===0)o+=`<text x="${x}" y="${base-84}" text-anchor="middle">no gap</text>`;x+=u});
+  $("alb").innerHTML=`<line x1="6" x2="${W-6}" y1="${base}" y2="${base}" stroke="var(--rule)"/>`+o})();
+const DEL=[
+ ["Sequence","open energetic, break with a ballad, then 3–4 mid or up-tempo songs; re-sequence freely","SA"],
+ ["Gap between songs","2 s default, then fine-tune; short keeps momentum, long clears the air","SA"],
+ ["Judging gaps","at moderate level; play 10–20 s of each ending into 5–10 s of the next start","SA"],
+ ["Before track 1 on CD","at least 2 s pre-gap","SA"],
+ ["CD master","16-bit / 44.1 kHz Red Book; DDP preferred, or a Disc-At-Once CD-R with a PQ sheet","SA"],
+ ["Streaming upload","highest quality accepted; aggregators take 16/44.1, Mastered for iTunes recommends 24/96","SA"],
+ ["Song codes and tags","ISRC per song; ISRCs don't carry across conversion, so re-embed them in each format","SA"],
+ ["After the burn","listen all the way through for pops and distortion; keep a duplicate","SA"],
+ ["Alternate mixes","vocal and drums ±1 dB, or vocal ±½–1 dB","OL OW"],
+ ["Level after limiting","you can only lower it, because a limited master has no headroom","SA"]
+];
+$("deliv").innerHTML=DEL.map(([a,b,s])=>`<tr><td>${a}</td><td>${b}</td><td class="src">${srcs(s)}</td></tr>`).join("");
+$("srcs").textContent="Sources: "+Object.values(SRC).join(" · ")+". Clarke's tips are bound with Benediktsson's book. The bench is a simplified model for practice, so its loudness readings are not measurements. Judge real masters by ear with a real meter.";
+document.querySelector(".jump").addEventListener("click",e=>{const b=e.target.closest("[data-to]");if(b)$(b.dataset.to).scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})});
+
+[T,C]=PRE[pre][1]();sync();chain();moves();fixes();
+</script>
+
+<nav class="gcnext" aria-label="Previous and next page"><a href="effects-map.html"><small>Previous</small>← Depth &amp; Effects Map</a><a href="desk-theory.html"><small>Next</small>Theory for the Sound Desk →</a></nav>
+</html>

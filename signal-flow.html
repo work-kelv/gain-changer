@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Signal Flow &amp; Gain Map · Gain Changer</title>
+<meta name="description" content="The path of a sound through the desk, and how to set gain at every stage.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23101318'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23f2b33d' stroke-width='3'/%3E%3Cpath d='M16 16 22 9' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sister page to the other maps. The path of one channel on top, then a level diagram that follows that channel, a send lab, groups and fixes. */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --fg:#1b2129; --muted:#5d6672; --rule:#dde2e8; --grid:#e8ecf0; --sel:#eef2f7;
+  --sig:#1f6fae; --wet:#7a4fb0; --ok:#2f7d5b; --warn:#a8710f; --clip:#c8352e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --sig:#5aa9e6; --wet:#c493dc; --ok:#5cc596; --warn:#e0a93f; --clip:#f0655c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151b; --panel:#171c24; --fg:#e4e8ee; --muted:#98a2af; --rule:#2a313c; --grid:#222933; --sel:#1f2630;
+  --sig:#5aa9e6; --wet:#c493dc; --ok:#5cc596; --warn:#e0a93f; --clip:#f0655c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,52px);line-height:1}
+h2{font-size:26px}
+h3{font-size:20px}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:16px}
+.eyebrow{font-family:var(--font-data);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:10px}
+.sec{display:flex;flex-direction:column;gap:14px;min-width:0}
+.jump{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px}
+.jump button{all:unset;cursor:pointer;font:600 14px var(--font-body);color:var(--sig);border-bottom:1px solid transparent}
+.jump button:hover{border-bottom-color:var(--sig)}
+button:focus-visible,input:focus-visible,.jump button:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.opt{font:600 14px var(--font-body);border:1px solid var(--rule);background:var(--panel);color:var(--fg);border-radius:6px;padding:7px 12px;cursor:pointer;text-align:left}
+.opt[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.src{font-family:var(--font-data);font-size:12px;color:var(--muted)}
+em.src{font-style:normal;margin-left:4px}
+
+/* path */
+.path{display:flex;flex-direction:column;gap:8px}
+.lane{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px 0}
+.lane>.eyebrow{width:100%}
+.st{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;min-width:0}
+.st b{font:600 16px var(--font-display);white-space:nowrap}
+.st span{font-size:12px;color:var(--muted);white-space:nowrap}
+.st[aria-pressed="true"]{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
+.lane.wet .st{border-style:dashed}
+.lane.wet .st[aria-pressed="true"]{border-style:solid;border-color:var(--wet);box-shadow:inset 0 0 0 1px var(--wet)}
+.ar{align-self:center;color:var(--muted);padding:0 5px;font-family:var(--font-data)}
+
+/* bench */
+.bench{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:18px;align-items:start}
+.chart svg{width:100%;height:auto;display:block}
+.chart svg text{font:11px var(--font-data);fill:var(--muted)}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--muted)}
+.ctl label b{font:500 13px var(--font-data);color:var(--fg)}
+.ctl input{width:100%;accent-color:var(--sig)}
+.reads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.read{background:var(--sel);border-radius:8px;padding:8px 10px;min-width:0}
+.read span{display:block;font-size:12.5px;color:var(--muted)}
+.read b{font:500 21px var(--font-data);font-variant-numeric:tabular-nums}
+.notes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.notes li{border-left:3px solid var(--ok);padding-left:10px;font-size:14px}
+.notes li.w{border-left-color:var(--warn)}.notes li.b{border-left-color:var(--clip)}
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.bar{display:grid;grid-template-columns:96px minmax(0,1fr) 62px;gap:8px;align-items:center;font-size:13.5px}
+.bar i{display:block;height:14px;border-radius:7px;background:var(--grid);overflow:hidden}
+.bar i u{display:block;height:100%;border-radius:7px}
+.bar span:last-child{font:500 13px var(--font-data);text-align:right}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:500 12px var(--font-data);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left}
+th,td{padding:7px 10px 7px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.fixout{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.fixout b{font:600 20px var(--font-display)}
+.notebox{background:var(--sel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+footer{font-size:13px;color:var(--muted)}
+.iconbtn{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid transparent;background:color-mix(in srgb,var(--bg) 85%,transparent);color:var(--muted);cursor:pointer}
+.iconbtn:hover{color:var(--fg);border-color:var(--rule)}
+.iconbtn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:860px){.bench,.lab{grid-template-columns:minmax(0,1fr)}}
+</style>
+<style>
+/* the base rules a bare page needs outside the artifact viewer */
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+.gcnav{display:flex;align-items:center;gap:6px 18px;min-height:54px;box-sizing:border-box;background:var(--panel);border-bottom:1px solid var(--rule);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(56px,calc(env(safe-area-inset-right,0px) + 46px));padding-top:env(safe-area-inset-top,0px)}
+.gcnav a{color:var(--muted);text-decoration:none;white-space:nowrap;font:600 14px "Source Sans 3","Segoe UI",system-ui,sans-serif;padding:4px 2px;border-bottom:2px solid transparent}
+.gcnav a:hover{color:var(--fg)}.gcnav a:focus-visible,.gcnext a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.gcnav a.home{color:var(--fg);font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em;flex:none}
+.gcnav a[aria-current]{color:var(--fg);border-bottom-color:currentColor}
+.gcnav div{display:flex;gap:16px;min-width:0;overflow-x:auto;scrollbar-width:none}.gcnav div::-webkit-scrollbar{display:none}
+.gcnext{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1180px;box-sizing:border-box;margin:0 auto;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
+.gcnext a{color:var(--fg);text-decoration:none;font:700 19px "Barlow Condensed","Arial Narrow",sans-serif}.gcnext a:hover{text-decoration:underline}
+.gcnext small{display:block;color:var(--muted);font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+.gcnext a:last-child{text-align:right;margin-left:auto}
+</style>
+
+<button type="button" class="iconbtn" id="theme"></button>
+<nav class="gcnav" aria-label="Gain Changer pages"><a class="home" href="index.html">Gain Changer</a><div><a href="signal-flow.html" aria-current="page">Signal flow</a><a href="pan-balance.html">Pan &amp; balance</a><a href="magic-frequencies.html">EQ</a><a href="compression-map.html">Compression</a><a href="effects-map.html">Effects</a><a href="mastering-map.html">Mastering</a><a href="desk-theory.html">Theory</a><a href="mix-trainer.html">Mix Trainer</a></div></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 of 8 · start here · 7 mixing books</div>
+  <h1>Signal Flow &amp; Gain Map</h1>
+  <p class="lede">Every sound takes the same road through the desk. Set the level at the start of that road, leave room at every stage, and work downward. Oltheten's rule: the master stays at 0 and nothing clips.</p>
+  <div class="jump">
+    <button type="button" data-to="sec-path">The road</button>
+    <button type="button" data-to="sec-gain">Level bench</button>
+    <button type="button" data-to="sec-send">Sends</button>
+    <button type="button" data-to="sec-group">Groups</button>
+    <button type="button" data-to="sec-num">Numbers</button>
+    <button type="button" data-to="sec-fix">Fixes</button>
+  </div>
+</header>
+
+<section class="sec" id="sec-path" aria-label="The road through the desk">
+  <h2>The road through the desk</h2>
+  <p>Sound travels left to right. Dashed boxes are the side road for shared effects. Pick any stop to see what it does and what the books say about it.</p>
+  <div class="path" id="path"></div>
+  <div class="card" id="stop"></div>
+</section>
+
+<section class="sec" id="sec-gain" aria-label="Level bench">
+  <h2>Level bench</h2>
+  <p>Follow one channel down the road. The line shows its peak level at each stop. Try a mistake below, then fix it. Levels are simulated, and no audio plays.</p>
+  <div class="row" id="presets"></div>
+  <div class="bench">
+    <div class="card chart">
+      <svg id="lv" viewBox="0 0 720 320" role="img" aria-label="Peak level of the channel at each stage from input to master"></svg>
+      <ul class="notes" id="notes" aria-live="polite"></ul>
+    </div>
+    <div class="card" id="ctls">
+      <div class="row" id="srcs0"></div>
+      <div class="row" id="bands"></div>
+      <div class="reads">
+        <div class="read"><span>After the preamp</span><b id="rp"></b></div>
+        <div class="read"><span>Main mix peak</span><b id="rm"></b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="sec-send" aria-label="Sends">
+  <h2>Sends: inserts and side roads</h2>
+  <p>An insert changes the whole signal on one channel. A send copies some of it to a shared effect, and the return brings the effect back. Pull the fader down below and watch what happens to the reverb.</p>
+  <div class="lab">
+    <div class="card">
+      <div class="row" id="sendmode"></div>
+      <div class="ctl"><label for="sf">Channel fader<b id="sfv"></b></label><input type="range" id="sf" min="-40" max="10" step="1" value="0"></div>
+      <div class="ctl"><label for="ss">Send level<b id="ssv"></b></label><input type="range" id="ss" min="-40" max="10" step="1" value="-10"></div>
+      <div class="ctl"><label for="sr">Return fader<b id="srv"></b></label><input type="range" id="sr" min="-30" max="10" step="1" value="0"></div>
+      <div id="sbars" class="notes"></div>
+      <p id="stxt"></p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Use</th><th>Goes on</th><th>Book</th></tr></thead>
+      <tbody id="ins"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="sec" id="sec-group" aria-label="Groups">
+  <h2>Groups</h2>
+  <p>A group is one fader for a family of instruments. Build the balance first, then send each family to its group. You then process and rebalance fewer things.</p>
+  <div class="groups" id="groups"></div>
+  <div class="notebox">
+    <p><strong>How many.</strong> Benediktsson: don't end up with more groups than source tracks. Oltheten keeps to about 16 faders or fewer so the mix fits in your head.</p>
+    <p><strong>Stacked compression.</strong> Savage: drums may pass through three compressors (track, drum group, mix bus). Together they can turn excitement into listener fatigue.</p>
+    <p><strong>Reverb returns.</strong> Nyquist sends a return to the master and not through a group compressor, because compression kills the sense of space. The exception is the drum reverb, which goes through the drum group.</p>
+  </div>
+</section>
+
+<section class="sec" id="sec-num" aria-label="Numbers">
+  <h2>Numbers</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>What</th><th>Value</th><th>Book</th></tr></thead>
+    <tbody id="nums"></tbody>
+  </table></div>
+  <div class="notebox">
+    <p><strong>Starting level: the books differ.</strong> Benediktsson starts tracks around −11 dB. Oltheten lets percussive sources peak at −6 dBFS and others as low as −12 dBFS. Savage starts with drums peaking near −10 dB on the master. All three leave room to rebalance.</p>
+    <p><strong>At church (not from the books).</strong> These books are about studio mixing. On a live desk, set gain with the real singer or player at performance level, because a soundcheck is often quieter than the service. Monitor mixes normally use pre-fader sends, so your front-of-house fader moves don't change what the band hears. Check how your own desk is set, since this varies.</p>
+    <p><strong>A clip stays clipped (not from the books).</strong> Once the input stage overloads, the damage is in the signal, so a later fader only makes the distortion quieter. Inside a computer mix, Senior notes channels have 24 dB or more of headroom. That headroom doesn't help a mic that already overloaded on the way in.</p>
+  </div>
+</section>
+
+<section class="sec" id="sec-fix" aria-label="Fixes">
+  <h2>Fixes</h2>
+  <div class="row" id="fixes"></div>
+  <div class="fixout" id="fixout"></div>
+</section>
+
+<footer id="foot"></footer>
+</div>
+
+<script>
+/* light / dark toggle: follows the device until clicked, then remembered here when storage allows */
+(function(){const btn=document.getElementById("theme");
+  const SUN='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
+  const MOON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  const cur=()=>document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const set=(t,save)=>{document.documentElement.dataset.theme=t;btn.innerHTML=t==="dark"?SUN:MOON;const l=t==="dark"?"Switch to light mode":"Switch to dark mode";btn.setAttribute("aria-label",l);btn.title=l;if(save)try{localStorage.setItem("guide-theme",t)}catch(e){}};
+  let s=null;try{s=localStorage.getItem("guide-theme")}catch(e){}
+  set(s==="light"||s==="dark"?s:cur());btn.addEventListener("click",()=>set(cur()==="dark"?"light":"dark",true))})();
+
+const SRC={OW:"Owsinski · Mixing Engineer's Handbook",SE:"Senior · Mixing Secrets",OL:"Oltheten · Mixing with Impact",SA:"Savage · Mixing & Mastering In the Box",NY:"Nyquist · The Bus Compression Framework",BS:"Benediktsson · Step By Step Mixing",CL:"Clarke · 56 Mix Tips"};
+const srcs=s=>s.split(" ").map(k=>SRC[k].split(" · ")[0]).join(", ");
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const num=v=>(v>0?"+":v<0?"−":"")+Math.abs(Math.round(v*10)/10);
+const dB=v=>num(v)+" dB";
+
+/* ---------- the road ---------- */
+const LANES=[["Channel",["pre","hpf","gate","eq","comp","fader","pan"],""],["Side road for shared effects",["send","fx","ret"],"wet"],["Everything joins here",["grp","main","mas"],""]];
+const STOPS={
+ pre:["Preamp","sets the level","The gain knob, or the trim on a recorded track. This is the most important level on the desk. Everything after it depends on this setting.",[["Start tracks hitting about −11 dB, which leaves room to rebalance without clipping.","BS"],["Percussive sources can peak at −6 dBFS, others as low as −12 dBFS. If a source peaks near 0 dBFS, trim the input.","OL"]]],
+ hpf:["High-pass","clears the floor","Removes lows the part doesn't need, so they don't eat headroom further down the road. Frequencies for each instrument are on the Magic Frequency Map.",[["Senior high-passes conservatively, only well below the lowest instrument notes in a multi-mic source.","SE"],["Off-centre and unneeded lows cost headroom.","OL"]]],
+ gate:["Gate","optional","Lowers quiet sounds between notes, such as spill and noise.",[["Put a gate or expander before the compressor, because a compressor brings up the quiet sounds.","SE"],["For a spill-heavy drum mic feeding a reverb, gate only the send.","OL"]]],
+ eq:["EQ","shapes tone","Boosts add level, so a big boost can clip what follows. EQ also moves the balance.",[["Rebalance after each EQ and compression move.","BS"],["Benediktsson's order: filter and cut, compress, then a post-EQ to restore what compression took away.","BS"]]],
+ comp:["Compressor","evens level","Turns the loud parts down, then makeup gain brings the level back. Settings are on the Compression Map.",[["Match the output to the bypassed level: trim the output, not the input.","BS"],["Judge any insert at matched level, because louder sounds better.","SA SE"]]],
+ fader:["Fader","sets the balance","The level of this part in the mix. It comes after the channel's processing, so moving it doesn't change how hard the compressor works.",[["When a part is too quiet, lower the others. Pushing one fader to the top wastes headroom and risks clipping.","BS"],["Fix conflicts by turning the other part down, never the drums up.","OL"]]],
+ pan:["Pan","places it","Moves the part between left and right. Moving a pan can change level by 3–6 dB, so pan first and balance after. Placement is on the Pan & Balance Map.",[["Pan before you balance.","SA SE"],["Team rule: keep instruments inside about 80%. Hard left and right are kept for reverb returns.","OL"]]],
+ send:["Send","copies a share","Sends a copy of the channel to a shared effect. The channel's own signal carries on unchanged. Send level sets how much of each channel reaches the effect.",[["Use post-fader sends for reverb, so the reverb follows the fader.","SE"],["Use a pre-fader send if you pull the dry signal down.","BS OL"]]],
+ fx:["Reverb or delay","the effect","One effect shared by many channels. It should output only the effect, with none of the dry sound. Settings are on the Depth & Effects Map.",[["Set the effect 100% wet.","SE BS"],["Filter every return: cut the lows and roll off the highs.","SE BS"]]],
+ ret:["Return","brings it back","A fader for the whole effect. Lower it to reduce the effect on everything at once.",[["Start with the return fader at unity, then raise the send until the part sits.","SE"],["If it sounds right but cluttered, lower the return rather than every send.","BS"],["Send a return to the master, not through a group compressor. The drum reverb is the exception.","NY"]]],
+ grp:["Group","one fader per family","Sums a family of channels, such as all drums or all vocals.",[["Route to groups once the static mix is good.","BS"],["Anything on a group hits every part in it, so use smaller moves.","SA"]]],
+ main:["Main mix","everything added","All the channels add together here, which is why the main meter reads higher than any one channel.",[["The full mix should peak around −6 to −3 dB with the master at unity.","SA"],["If the main goes over 0 dBFS, lower all sources in proportion.","OL"]]],
+ mas:["Master fader","stays at 0","The last level control before the speakers or the recording.",[["Leave the master fader at 0 and work downward.","OL SA"]]]
+};
+let stop="pre";
+function path(){
+  $("path").innerHTML=LANES.map(([n,ids,c])=>`<div class="lane ${c}"><span class="eyebrow">${n}</span>${ids.map((id,i)=>`${i?'<span class="ar" aria-hidden="true">→</span>':""}<button type="button" class="st" data-s="${id}" aria-pressed="${id===stop}"><b>${STOPS[id][0]}</b><span>${STOPS[id][1]}</span></button>`).join("")}</div>`).join("");
+  const s=STOPS[stop];$("stop").innerHTML=`<h3>${s[0]}</h3><p>${s[2]}</p><ul class="notes">${s[3].map(([t,k])=>`<li>${t}<em class="src">${srcs(k)}</em></li>`).join("")}</ul>`;
+}
+$("path").addEventListener("click",e=>{const b=e.target.closest("[data-s]");if(b){stop=b.dataset.s;path()}});
+
+/* ---------- level bench: one channel's peak in dBFS at each stop; N equal channels add as power ---------- */
+const SOURCES=[["Quiet singer",-34],["Typical mic",-24],["Loud drum",-14]];
+const BANDS=[["Leader + piano",3],["Small band",12],["Full band",17]];
+const CTL=[["g","Preamp gain",0,50,1],["e","EQ boost",-6,12,1],["c","Compression",0,12,1],["k","Makeup gain",0,12,1],["f","Channel fader",-40,10,1],["u","Group fader",-20,10,1],["m","Master fader",-20,10,1]];
+const PRE=[["Healthy",{s:1,n:1,g:13,e:0,c:4,k:4,f:-4,u:0,m:0}],["Preamp too hot",{s:1,n:1,g:27,e:0,c:4,k:4,f:-18,u:0,m:0}],["Too low, fader pushed",{s:0,n:1,g:8,e:0,c:0,k:0,f:10,u:6,m:0}],["Too many channels up",{s:1,n:2,g:13,e:0,c:4,k:4,f:0,u:0,m:0}],["Master hiding a clip",{s:1,n:2,g:13,e:0,c:4,k:4,f:2,u:0,m:-8}],["Compressor made it louder",{s:1,n:1,g:13,e:0,c:4,k:12,f:-12,u:0,m:0}]];
+let st={...PRE[0][1]},pre=0;
+const STG=["Input","Preamp","EQ","Compressor","Fader","Group","Main mix","Master"];
+function levels(a){
+  const L=[SOURCES[a.s][1]];L.push(L[0]+a.g);L.push(L[1]+a.e);L.push(L[2]-a.c+a.k);L.push(L[3]+a.f);L.push(L[4]+a.u);L.push(L[5]+10*Math.log10(BANDS[a.n][1]));L.push(L[6]+a.m);
+  return L;
+}
+function check(a){
+  const L=levels(a),p=L[1],n=[],clipAt=L.findIndex(v=>v>0);
+  if(clipAt>=0&&clipAt<6)n.push(["b",`Clipping at the ${STG[clipAt].toLowerCase()} (${num(L[clipAt])} dBFS). ${clipAt===1?"Turn the preamp gain down. A later fader only makes the distortion quieter.":"Lower that stage."}`,"OL"]);
+  else if(p<-18)n.push(["w",`The preamp is low (${num(p)} dBFS). Aim for about −11 dB.`,"BS"]);
+  else if(p>-6&&p<=0)n.push(["w",`The preamp is hot (${num(p)} dBFS), with little room left.`,"OL"]);
+  else n.push(["ok",`Preamp at ${num(p)} dBFS: room to rebalance.`,"BS OL"]);
+  if(a.f>=7||a.u>=7)n.push(["w","A fader is pushed near the top. Raise the gain, or lower the other parts.","BS"]);
+  if(Math.abs(a.k-a.c)>2)n.push(["w",`Makeup is ${a.k>a.c?"above":"below"} the compression by ${Math.abs(a.k-a.c)} dB. Match the output to the bypassed level.`,"BS"]);
+  if(a.m!==0)n.push(["w",`Master at ${dB(a.m)}. Return it to 0 and lower the sources instead.`,"OL SA"]);
+  if(L[6]>0)n.push(["b",`The main mix adds up to ${num(L[6])} dBFS before the master. Lower all sources in proportion.`,"OL"]);
+  else if(L[6]>=-6&&L[6]<=-3&&a.m===0&&clipAt<0)n.push(["ok",`Main mix at ${num(L[6])} dB with the master at 0: right on Savage's target.`,"SA"]);
+  else if(L[6]<-6)n.push(["w",`Main mix at ${num(L[6])} dB. Savage aims for −6 to −3.`,"SA"]);
+  else if(L[6]>-3)n.push(["w",`Main mix at ${num(L[6])} dB, above Savage's −6 to −3.`,"SA"]);
+  return{L,n,clipAt};
+}
+function chart(r){
+  const W=720,H=320,l=44,rr=10,t=12,b=30,pw=W-l-rr,ph=H-t-b,X=i=>l+i/7*pw,Y=d=>t+(14-clamp(d,-46,14))/60*ph;
+  let o=`<rect x="${l}" y="${t}" width="${pw}" height="${Y(0)-t}" fill="var(--clip)" opacity=".1"/>`;
+  o+=`<rect x="${X(1)-22}" y="${Y(-8)}" width="44" height="${Y(-14)-Y(-8)}" fill="var(--ok)" opacity=".22"/><rect x="${X(6)-22}" y="${Y(-3)}" width="44" height="${Y(-6)-Y(-3)}" fill="var(--ok)" opacity=".22"/>`;
+  for(const d of [12,0,-12,-24,-36])o+=`<line x1="${l}" x2="${W-rr}" y1="${Y(d)}" y2="${Y(d)}" stroke="${d?"var(--grid)":"var(--clip)"}"/><text x="${l-6}" y="${Y(d)+4}" text-anchor="end">${d>0?"+":d<0?"−":""}${Math.abs(d)}</text>`;
+  STG.forEach((s,i)=>o+=`<text x="${X(i)}" y="${H-10}" text-anchor="${i===0?"start":i===7?"end":"middle"}">${s}</text>`);
+  const L=r.L,c=r.clipAt;
+  L.forEach((v,i)=>{if(i){const bad=c>=0&&i-1>=c;o+=`<line x1="${X(i-1)}" y1="${Y(L[i-1])}" x2="${X(i)}" y2="${Y(v)}" stroke="var(${bad?"--clip":"--sig"})" stroke-width="3"${bad?' stroke-dasharray="7 5"':""}/>`}});
+  L.forEach((v,i)=>{o+=`<circle cx="${X(i)}" cy="${Y(v)}" r="6" fill="var(${v>0?"--clip":"--sig"})" stroke="var(--panel)" stroke-width="2"/><text x="${X(i)+(i===7?-4:i===0?4:0)}" y="${Y(v)-11}" text-anchor="${i===0?"start":i===7?"end":"middle"}" style="fill:var(--fg)">${num(v)}</text>`});
+  $("lv").innerHTML=o;
+}
+function bench(){
+  const r=check(st);chart(r);
+  $("notes").innerHTML=r.n.map(([s,t,k])=>`<li class="${s==="ok"?"":s}">${t}<em class="src">${srcs(k)}</em></li>`).join("");
+  $("rp").textContent=num(r.L[1])+" dB";$("rm").textContent=num(r.L[7])+" dB";
+  CTL.forEach(([k])=>{$("c-"+k).value=st[k];$("v-"+k).textContent=dB(st[k])});
+  $("presets").innerHTML=PRE.map(([n],i)=>`<button type="button" class="opt" data-p="${i}" aria-pressed="${i===pre}">${n}</button>`).join("");
+  $("srcs0").innerHTML=SOURCES.map(([n],i)=>`<button type="button" class="opt" data-so="${i}" aria-pressed="${i===st.s}">${n}</button>`).join("");
+  $("bands").innerHTML=BANDS.map(([n,c],i)=>`<button type="button" class="opt" data-b="${i}" aria-pressed="${i===st.n}">${n} (${c})</button>`).join("");
+}
+$("ctls").insertAdjacentHTML("beforeend",CTL.map(([k,n,a,b,s])=>`<div class="ctl"><label for="c-${k}">${n}<b id="v-${k}"></b></label><input type="range" id="c-${k}" data-k="${k}" min="${a}" max="${b}" step="${s}"></div>`).join(""));
+$("ctls").addEventListener("input",e=>{const k=e.target.dataset.k;if(k){st[k]=+e.target.value;pre=-1;bench()}});
+$("ctls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.so!=null)st.s=+b.dataset.so;else if(b.dataset.b!=null)st.n=+b.dataset.b;else return;pre=-1;bench()});
+$("presets").addEventListener("click",e=>{const b=e.target.closest("[data-p]");if(b){pre=+b.dataset.p;st={...PRE[pre][1]};bench()}});
+
+/* ---------- send lab: wet = send + return, plus the fader when the send is post-fader ---------- */
+let sm="post";
+function sendL(f,s,r,mode){return{dry:f,wet:s+r+(mode==="post"?f:0)}}
+function lab(){
+  const f=+$("sf").value,s=+$("ss").value,r=+$("sr").value,v=sendL(f,s,r,sm),w=d=>clamp((d+50)/60*100,0,100);
+  $("sfv").textContent=dB(f);$("ssv").textContent=dB(s);$("srv").textContent=dB(r);
+  $("sendmode").innerHTML=[["post","Post-fader send"],["pre","Pre-fader send"]].map(([k,n])=>`<button type="button" class="opt" data-m="${k}" aria-pressed="${k===sm}">${n}</button>`).join("");
+  $("sbars").innerHTML=[["Dry channel",v.dry,"--sig"],["Reverb",v.wet,"--wet"]].map(([n,d,c])=>`<div class="bar"><span>${n}</span><i><u style="width:${w(d)}%;background:var(${c})"></u></i><span>${dB(d)}</span></div>`).join("");
+  const gap=v.dry-v.wet;
+  $("stxt").textContent=sm==="post"?`The reverb stays ${dB(Math.abs(gap)).replace(/^[+−]/,"")} ${gap>=0?"below":"above"} the dry signal wherever the fader goes, so the depth holds as you ride the part. Senior uses this for reverb.`:`The reverb ignores the fader. It's now ${dB(Math.abs(gap)).replace(/^[+−]/,"")} ${gap>=0?"below":"above"} the dry signal. Benediktsson uses this when the dry is pulled down, and Oltheten for parallel compression past 50%.`;
+}
+["sf","ss","sr"].forEach(i=>$(i).addEventListener("input",lab));
+$("sendmode").addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(b){sm=b.dataset.m;lab()}});
+
+const INS=[["EQ, compressor, gate on one part","Insert","BS SE"],["De-esser before a reverb","Insert or send","SE OL"],["Reverb or delay shared by many parts","Send and return","SA SE"],["Parallel compression","Send, or a parallel group","OL BS"],["Character effects you want to audition fast","Send","OL"]];
+$("ins").innerHTML=INS.map(([a,b,s])=>`<tr><td>${a}</td><td>${b}</td><td class="src">${srcs(s)}</td></tr>`).join("");
+const GRP=[["Drums","Kick, snare, hi-hat, ride, overheads. Optional kick and snare sub-groups feed it."],["Bass","Its own group."],["Guitars","One group if they match; split rhythm, acoustic and solo if they vary."],["Keys and pads","Benediktsson doesn't list keys separately; we'd keep them as one family here."],["Lead vocal","Its own group."],["Backing vocals","Key vocalists together when there are several harmonies, so you can move them as one."]];
+$("groups").innerHTML=GRP.map(([a,b])=>`<div class="card"><h3>${a}</h3><span>${b}</span></div>`).join("");
+const NUM=[["Starting track level","about −11 dB","BS"],["Percussive peak on a track","−6 dBFS","OL"],["Non-percussive peak on a track","as low as −12 dBFS (24-bit)","OL"],["Loudest drums on the main mix","−6 dBFS","OL"],["Drums at the start of the mix","about −10 dB on the master","SA"],["Full mix peaks","−6 to −3 dB, master at unity","SA"],["Master fader","0 dB","OL SA"],["Channel headroom in a computer mix","24 dB or more (floating point)","SE"],["Fader nudges while balancing","1 dB at a time","BS SE"],["0 dBu","0.775 V","OL"],["+4 dBu","1.23 V","OL"],["0 dBV","1 V","OL"]];
+$("nums").innerHTML=NUM.map(([a,b,s])=>`<tr><td>${a}</td><td>${b}</td><td class="src">${srcs(s)}</td></tr>`).join("");
+const FX=[
+ ["One channel's clip light is on","Turn down that channel's preamp gain. Its fader comes after the clip and can't remove it.","OL"],
+ ["The main meter goes over 0","Keep the master at 0 and lower all the sources in proportion.","OL"],
+ ["A part is too quiet with its fader at the top","Lower the other faders, or raise the gain if the channel is under-driven. Pushing one fader wastes headroom.","BS"],
+ ["The channel jumps in level when the compressor is bypassed","Match the output to the bypassed level. Trim the output, not the input.","BS"],
+ ["The balance changed after EQ","Expected. Every EQ, compressor and reverb change moves the balance, so re-ride the faders.","BS"],
+ ["The reverb stays when I pull a fader down","That send is pre-fader. Switch it to post-fader.","SE"],
+ ["Reverb sounds doubled or thick","Set the reverb 100% wet, so only the effect comes back.","SE"],
+ ["Spill is reaching the reverb","Gate only the send, or send from a gated copy.","OL OW"],
+ ["The drums sound tiring","Check for stacked compression on the track, the drum group and the mix bus.","SA"],
+ ["There are too many faders to manage","Group by family, keeping to about 16 faders, and put the important ones closest to hand.","OL SE"],
+ ["A vocal disappears in mono","Look for an out-of-phase effect or a wiring fault.","OW"]
+];
+let fx=0;
+function fixes(){
+  $("fixes").innerHTML=FX.map((f,i)=>`<button type="button" class="opt" data-f="${i}" aria-pressed="${i===fx}">${f[0]}</button>`).join("");
+  $("fixout").innerHTML=`<b>${FX[fx][0]}</b><span>${FX[fx][1]}</span><span class="src">${srcs(FX[fx][2])}</span>`;
+}
+$("fixes").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){fx=+b.dataset.f;fixes()}});
+$("foot").textContent="Sources: "+Object.values(SRC).join(" · ")+". Clarke's tips are bound with Benediktsson's book. The stage descriptions are plain explanations; the rules beside them come from the named books. The bench and send lab are simplified models for practice.";
+document.querySelector(".jump").addEventListener("click",e=>{const b=e.target.closest("[data-to]");if(b)$(b.dataset.to).scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})});
+path();bench();lab();fixes();
+</script>
+
+<nav class="gcnext" aria-label="Previous and next page"><a href="index.html"><small>Back to</small>← Contents</a><a href="pan-balance.html"><small>Next</small>Pan &amp; Balance Map →</a></nav>
+</html>
