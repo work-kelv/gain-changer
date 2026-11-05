@@ -204,23 +204,44 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:20}
 footer{font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.big{animation:none}.meter .fill,.step .bar i,.balm .nd,.rd{transition:none}}
+.dseg{display:none}
 @media (max-width:980px){
   .main{display:flex;flex-direction:column;align-items:stretch}.side{display:contents}
-  /* the panel freezes under the top of the screen, like a frozen pane */
-  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:42dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
+/* the panel freezes under the top of the screen in three modes, and never scrolls inside itself:
+     less = visualisation only, at 40% of the screen; more = with the key and legend; off = not frozen */
+  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;box-sizing:border-box;padding:10px 12px;gap:8px;overflow:hidden;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
+  .dock[data-mode="less"]{height:40dvh}
+  .dock[data-mode="more"]{max-height:82dvh}
+  .dock[data-mode="off"]{position:static;overflow:visible;box-shadow:none}
+  .dock .dseg{display:flex;flex:none;gap:4px}
+  .dock[data-mode="less"] #keyd{display:none}
+  .dock[data-mode="more"] #keyd>summary{display:none}
+  .dock[data-mode="less"] svg#mv,.dock[data-mode="less"] svg#rdr{flex:1 1 0;min-height:0}
+  .dock[data-mode="more"] svg#mv,.dock[data-mode="more"] svg#rdr{flex:0 1 auto;min-height:100px;max-height:24dvh}
+  .dock[data-mode="more"] .mvkey{gap:3px 4px;margin-bottom:5px}
+  .dock[data-mode="more"] .mvkey li{font-size:11.5px;padding:1px 6px 1px 2px;gap:3px}
+  .dock[data-mode="more"] .mvkey .n{width:16px;height:16px;font-size:9.5px}
+  .dock[data-mode="more"] .legend,.dock[data-mode="more"] .mvlegend{font-size:11px;gap:1px 10px;line-height:1.3}
+  .dockbar{gap:6px}#dockmin{display:none}
+  .dock .toggle .btn{padding:4px 8px;font-size:12.5px}
+  .dock #dockbody:not([hidden]),.dock #dview:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0}
+  .dock #dview:not([hidden]){gap:8px}
+  .dock #dsheet:not([hidden]){flex:1;min-height:0;overflow-y:auto}
   .stage{order:2}#coachcard{order:3}
   /* nothing left to monitor on the grade page, so the panel lets go */
-  .dock.nofreeze{position:static;order:3;max-height:none;overflow:visible;box-shadow:none}
-  .dock.nofreeze svg#mv,.dock.nofreeze svg#rdr{max-height:none}
+  .dock.nofreeze{position:static;order:3;height:auto;max-height:none;overflow:visible;box-shadow:none}
+  .dock.nofreeze .dockbar{display:none}
+  .dock.nofreeze #keyd{display:flex}
+  .dock.nofreeze svg#mv,.dock.nofreeze svg#rdr{flex:none;max-height:none}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-  .dock svg#mv,.dock svg#rdr{max-height:30dvh}
-  .dock svg#rdr{max-height:max(170px,calc(42dvh - 150px))}
   .dock .dbus{grid-template-columns:1fr 1fr;gap:10px}.dock .dbus .mscale{display:none}.dock .dbus h3{font-size:11px;letter-spacing:.06em;white-space:nowrap}
   .dock .dbus>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 6px}
   .dock .dbus .lr{display:none}
   .dock .dbus .pill{grid-column:2;grid-row:1;align-self:center;font-size:10.5px;padding:1px 6px}
   .dock .dbus .meter,.dock .dbus .balm{grid-column:1/-1;grid-row:2}
   .steps{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:980px) and (max-height:660px){.dock[data-mode="more"]{position:static;max-height:none;overflow:visible;box-shadow:none}}
+@media (max-width:350px){.dock .toggle .btn,.dock .mvtabs .opt{padding:4px 6px;font-size:12px}.dock .long{display:none}}
 @media (max-width:520px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.gradebox{grid-template-columns:minmax(0,1fr)}.mascot{margin:0 auto}.rpwrap{grid-template-columns:minmax(0,1fr)}#rpimg{max-width:260px;margin:0 auto}.br{grid-template-columns:82px minmax(0,1fr) 30px;row-gap:2px}.br .tag{grid-column:1/-1;text-align:left}.br .tag:empty{display:none}}
 </style>
 <style>
@@ -276,8 +297,8 @@ body{margin:0}img{max-width:100%}[hidden]{display:none!important}
   <div class="main">
     <section class="stage" id="stage" aria-live="polite"></section>
     <aside class="side">
-      <div class="card dock mixview" id="dock">
-        <div class="dockbar"><div class="toggle" id="docktabs" role="group" aria-label="Panel"><button type="button" class="btn" data-dt="view">Mix view</button><button type="button" class="btn" data-dt="sheet">Cheat sheet</button></div><button type="button" class="linkb" id="dockmin" aria-expanded="true">Hide</button></div>
+      <div class="card dock mixview" id="dock" data-mode="less">
+        <div class="dockbar"><div class="toggle" id="docktabs" role="group" aria-label="Panel"><button type="button" class="btn" data-dt="view">Mix<span class="long"> view</span></button><button type="button" class="btn" data-dt="sheet">Cheat<span class="long"> sheet</span></button></div><div class="toggle dseg" role="group" aria-label="Phone panel"><button type="button" class="btn" data-dm="less" aria-pressed="true" aria-label="Frozen, visualisation only">Less</button><button type="button" class="btn" data-dm="more" aria-pressed="false" aria-label="Frozen, with key and legend">More</button><button type="button" class="btn" data-dm="off" aria-pressed="false" aria-label="Not frozen">Unpin</button></div><button type="button" class="linkb" id="dockmin" aria-expanded="true">Hide</button></div>
         <div id="dockbody">
           <div id="dview">
             <div id="buscard" hidden></div>
@@ -1133,7 +1154,13 @@ const tabNow=()=>step>=1&&step<=5?dtab[step]||(step===3||step===4?"sheet":"view"
 document.getElementById("docktabs").addEventListener("click",e=>{const b=e.target.closest("[data-dt]");if(b){dtab[step]=b.dataset.dt;renderDock();mixView()}});
 const dockMin=document.getElementById("dockmin");
 dockMin.addEventListener("click",()=>{const body=document.getElementById("dockbody"),h=!body.hidden;body.hidden=h;dockMin.textContent=h?"Show":"Hide";dockMin.setAttribute("aria-expanded",!h);if(!h)mixView()});
-if(innerWidth<=980)document.getElementById("keyd").open=false;
+/* phones: how the mix panel behaves, remembered between pages */
+const dockEl=document.getElementById("dock");
+function setDock(m,redraw){dockEl.dataset.mode=m;dockEl.querySelectorAll("[data-dm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dm===m));
+  if(matchMedia("(max-width:980px)").matches)document.getElementById("keyd").open=m!=="less";
+  if(redraw){try{localStorage.setItem("guide-dock",m)}catch(e){}mixView()}}
+dockEl.addEventListener("click",e=>{const b=e.target.closest("[data-dm]");if(b)setDock(b.dataset.dm,true)});
+{let m="less";try{const v=localStorage.getItem("guide-dock");if(["less","more","off"].includes(v))m=v}catch(e){}setDock(m,false)}
 
 /* confetti for S / A */
 function confetti(L){

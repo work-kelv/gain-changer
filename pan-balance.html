@@ -213,11 +213,26 @@ footer{font-size:13px;color:var(--muted)}
 .checks li.info{border-left-color:var(--mono)}
 .checks li em{font-style:normal;font-family:var(--font-data);font-size:12px;color:var(--muted);margin-left:4px}
 @media (prefers-reduced-motion:reduce){.rd{transition:none}}
+.dseg{display:none}
 @media (max-width:980px){
   .deskgrid{display:flex;flex-direction:column;align-items:stretch}.verdict{display:contents}
-  /* the panel freezes under the top of the screen, as it does in the Mix Trainer */
-  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:42dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
-  .dock svg#mv,.dock svg#rdr{max-height:30dvh}
+/* the panel freezes under the top of the screen in three modes, and never scrolls inside itself:
+     less = visualisation only, at 40% of the screen; more = with the key and legend; off = not frozen */
+  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;box-sizing:border-box;padding:10px 12px;gap:8px;overflow:hidden;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
+  .dock[data-mode="less"]{height:40dvh}
+  .dock[data-mode="more"]{max-height:82dvh}
+  .dock[data-mode="off"]{position:static;overflow:visible;box-shadow:none}
+  .dock .dseg{display:flex;flex:none;gap:4px}
+  .dock[data-mode="less"] #keyd{display:none}
+  .dock[data-mode="more"] #keyd>summary{display:none}
+  .dock[data-mode="less"] svg#mv,.dock[data-mode="less"] svg#rdr{flex:1 1 0;min-height:0}
+  .dock[data-mode="more"] svg#mv,.dock[data-mode="more"] svg#rdr{flex:0 1 auto;min-height:100px;max-height:24dvh}
+  .dock[data-mode="more"] .mvkey{gap:3px 4px;margin-bottom:5px}
+  .dock[data-mode="more"] .mvkey li{font-size:11.5px;padding:1px 6px 1px 2px;gap:3px}
+  .dock[data-mode="more"] .mvkey .n{width:16px;height:16px;font-size:9.5px}
+  .dock[data-mode="more"] .legend,.dock[data-mode="more"] .mvlegend{font-size:11px;gap:1px 10px;line-height:1.3}
+  .dock .mvhead{flex-wrap:nowrap;gap:6px}.dock .mvtabs .opt{padding:4px 8px;font-size:12.5px}
+  .dock #maskct{position:absolute;right:12px;top:48px;z-index:1;font-size:10.5px}
   .dkside{order:2}.master{order:3}.meter{order:4}.vtxt{order:5}.checks{order:6}.dkreset{order:7}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 }
@@ -226,6 +241,8 @@ footer{font-size:13px;color:var(--muted)}
   .detail{position:static}
   .detail img{max-width:380px}
 }
+@media (max-width:980px) and (max-height:660px){.dock[data-mode="more"]{position:static;max-height:none;overflow:visible;box-shadow:none}}
+@media (max-width:350px){.dock .toggle .btn,.dock .mvtabs .opt{padding:4px 6px;font-size:12px}.dock .long{display:none}}
 @media (max-width:520px){
   .lane,.axis{grid-template-columns:84px minmax(0,1fr)}
   .legend{padding-left:0}
@@ -319,8 +336,8 @@ body{margin:0}img{max-width:100%}[hidden]{display:none!important}
       <div class="dkgrps" id="mixer"></div>
     </div>
     <div class="verdict">
-      <div class="dock mixview" id="dock">
-        <div class="mvhead"><div class="mvtabs" id="mvtabs" role="group" aria-label="Mix view type"><button type="button" class="opt" data-mv="radar" aria-pressed="true">Radar</button><button type="button" class="opt" data-mv="freq" aria-pressed="false">Frequency</button></div><span class="eyebrow" id="maskct"></span></div>
+      <div class="dock mixview" id="dock" data-mode="less">
+        <div class="mvhead"><div class="mvtabs" id="mvtabs" role="group" aria-label="Mix view type"><button type="button" class="opt" data-mv="radar" aria-pressed="true">Radar</button><button type="button" class="opt" data-mv="freq" aria-pressed="false">Freq<span class="long">uency</span></button></div><div class="mvtabs dseg" role="group" aria-label="Phone panel"><button type="button" class="opt" data-dm="less" aria-pressed="true" aria-label="Frozen, visualisation only">Less</button><button type="button" class="opt" data-dm="more" aria-pressed="false" aria-label="Frozen, with key and legend">More</button><button type="button" class="opt" data-dm="off" aria-pressed="false" aria-label="Not frozen">Unpin</button></div><span class="eyebrow" id="maskct"></span></div>
         <svg id="mv" viewBox="0 0 560 330" role="img" aria-label="Mix view: pan left to right, frequency low to high" hidden></svg>
         <svg id="rdr" viewBox="0 0 560 324" role="img" aria-label="Listener radar"><g id="rbg"></g><g id="rlink"></g><g id="rcl"></g><g id="rdots"></g><g id="rinfo"></g></svg>
         <details id="keyd" open><summary class="eyebrow">Channel key</summary>
@@ -831,7 +848,13 @@ rdrEl.addEventListener("mouseover",e=>{const d=e.target.closest("[data-cl]"),c=d
 rdrEl.addEventListener("mouseleave",()=>setCl(null));
 if(typeof ResizeObserver!=="undefined")new ResizeObserver(()=>{if(!rdrEl.hasAttribute("hidden")&&Math.round(rdrEl.getBoundingClientRect().width)!==rw)radar()}).observe(rdrEl);
 document.getElementById("mvtabs").addEventListener("click",e=>{const b=e.target.closest("[data-mv]");if(!b)return;mvTab=b.dataset.mv;e.currentTarget.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));mixView()});
-if(innerWidth<=980)document.getElementById("keyd").open=false;
+/* phones: how the mix panel behaves, remembered between pages */
+const dockEl=document.getElementById("dock");
+function setDock(m,redraw){dockEl.dataset.mode=m;dockEl.querySelectorAll("[data-dm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dm===m));
+  if(matchMedia("(max-width:980px)").matches)document.getElementById("keyd").open=m!=="less";
+  if(redraw){try{localStorage.setItem("guide-dock",m)}catch(e){}mixView()}}
+dockEl.addEventListener("click",e=>{const b=e.target.closest("[data-dm]");if(b)setDock(b.dataset.dm,true)});
+{let m="less";try{const v=localStorage.getItem("guide-dock");if(["less","more","off"].includes(v))m=v}catch(e){}setDock(m,false)}
 function analyse(){
   let L=0,R=0;
   for(const c of desk){if(!radarOn(c))continue;const a2=Math.pow(10,c.lvl/10);
