@@ -130,6 +130,25 @@ body{margin:0}img{max-width:100%}[hidden]{display:none!important}
 .gcnav a.home{color:var(--fg);font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em;flex:none}
 .gcnav a[aria-current]{color:var(--fg);border-bottom-color:currentColor}
 .gcnav div{display:flex;gap:16px;min-width:0;overflow-x:auto;scrollbar-width:none}.gcnav div::-webkit-scrollbar{display:none}
+/* page menu: the links become one button when they no longer fit */
+.gcnav{position:relative;z-index:20}
+.gcmenu{display:none;margin-left:auto;min-width:0}
+.gcmenu summary{display:flex;align-items:center;gap:7px;min-height:38px;box-sizing:border-box;padding:0 10px;border:1px solid var(--rule);border-radius:8px;color:var(--fg);cursor:pointer;list-style:none;font:600 14px "Source Sans 3","Segoe UI",system-ui,sans-serif;white-space:nowrap}
+.gcmenu summary::-webkit-details-marker{display:none}
+.gcmenu summary::after{content:"";flex:none;width:7px;height:7px;margin:-3px 2px 0 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg)}
+.gcmenu[open] summary::after{margin-top:3px;transform:rotate(-135deg)}
+.gcmenu summary:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.gcmenu summary span{font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;color:var(--muted)}
+.gcmenu summary b{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gcmenu ol{position:absolute;left:0;right:0;top:100%;margin:0;padding:6px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px));list-style:none;background:var(--panel);border-bottom:1px solid var(--rule);box-shadow:0 14px 24px rgba(0,0,0,.22)}
+.gcmenu li{margin:0;padding:0}
+.gcnav .gcmenu a{display:flex;align-items:center;gap:12px;min-height:46px;box-sizing:border-box;padding:0 8px;border:0;border-radius:8px;color:var(--fg);white-space:normal;font:600 16px "Source Sans 3","Segoe UI",system-ui,sans-serif}
+.gcnav .gcmenu a span{flex:none;width:18px;text-align:right;font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;color:var(--muted)}
+.gcnav .gcmenu a:hover{background:var(--bg)}
+.gcnav .gcmenu a[aria-current]{background:var(--bg);box-shadow:inset 3px 0 0 currentColor}
+.gcnav .gcmenu a:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+@media (max-width:900px){.gcnav .gclinks{display:none}.gcmenu{display:block}}
+@media (max-width:400px){.gcnav{column-gap:10px}.gcmenu summary span{display:none}}
 .gcnext{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;max-width:1180px;box-sizing:border-box;margin:0 auto;padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
 .gcnext a{color:var(--fg);text-decoration:none;font:700 19px "Barlow Condensed","Arial Narrow",sans-serif}.gcnext a:hover{text-decoration:underline}
 .gcnext small{display:block;color:var(--muted);font:500 12px "IBM Plex Mono",ui-monospace,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
@@ -137,7 +156,8 @@ body{margin:0}img{max-width:100%}[hidden]{display:none!important}
 </style>
 
 <button type="button" class="iconbtn" id="theme"></button>
-<nav class="gcnav" aria-label="Gain Changer pages"><a class="home" href="index.html">Gain Changer</a><div><a href="signal-flow.html">Signal flow</a><a href="pan-balance.html">Pan &amp; balance</a><a href="magic-frequencies.html">EQ</a><a href="compression-map.html">Compression</a><a href="effects-map.html">Effects</a><a href="mastering-map.html">Mastering</a><a href="desk-theory.html" aria-current="page">Theory</a><a href="mix-trainer.html">Mix Trainer</a></div></nav>
+<nav class="gcnav" aria-label="Gain Changer pages"><a class="home" href="index.html">Gain Changer</a><div class="gclinks"><a href="signal-flow.html">Signal flow</a><a href="pan-balance.html">Pan &amp; balance</a><a href="magic-frequencies.html">EQ</a><a href="compression-map.html">Compression</a><a href="effects-map.html">Effects</a><a href="mastering-map.html">Mastering</a><a href="desk-theory.html" aria-current="page">Theory</a><a href="mix-trainer.html">Mix Trainer</a></div><details class="gcmenu"><summary aria-label="Pages. You are on part 7 of 8: Theory"><span>7/8</span><b>Theory</b></summary><ol><li><a href="signal-flow.html"><span>1</span>Signal flow</a></li><li><a href="pan-balance.html"><span>2</span>Pan &amp; balance</a></li><li><a href="magic-frequencies.html"><span>3</span>EQ</a></li><li><a href="compression-map.html"><span>4</span>Compression</a></li><li><a href="effects-map.html"><span>5</span>Effects</a></li><li><a href="mastering-map.html"><span>6</span>Mastering</a></li><li><a href="desk-theory.html" aria-current="page"><span>7</span>Theory</a></li><li><a href="mix-trainer.html"><span>8</span>Mix Trainer</a></li></ol></details></nav>
+<script>(function(){var m=document.querySelector(".gcmenu");document.addEventListener("click",function(e){if(m.open&&!m.contains(e.target))m.open=false});document.addEventListener("keydown",function(e){if(e.key==="Escape"&&m.open){m.open=false;m.querySelector("summary").focus()}})})();</script>
 <div class="wrap">
 <header>
   <div class="eyebrow">Part 7 of 8 · Open Music Theory + mixing books</div>
