@@ -1,5 +1,7 @@
 # Gain Changer: A Framework for Audio Mixing
 
+**Live site: https://work-kelv.github.io/gain-changer/**
+
 Gain Changer is a set of interactive guides for learning to mix a live band, from the first gain knob to a finished master. It ends with the Mix Trainer, where you mix a simulated band and get graded against what the mixing books say.
 
 The guides were built for a church sound team, so the examples use a typical worship band: drums, bass, electric and acoustic guitar, keys, a worship leader and backing vocalists. The mixing ideas apply to any band.
