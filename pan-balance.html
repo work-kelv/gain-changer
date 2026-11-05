@@ -216,8 +216,8 @@ footer{font-size:13px;color:var(--muted)}
 @media (max-width:980px){
   .deskgrid{display:flex;flex-direction:column;align-items:stretch}.verdict{display:contents}
   /* the panel freezes under the top of the screen, as it does in the Mix Trainer */
-  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:52dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
-  .dock svg#mv,.dock svg#rdr{max-height:38dvh}
+  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:42dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
+  .dock svg#mv,.dock svg#rdr{max-height:30dvh}
   .dkside{order:2}.master{order:3}.meter{order:4}.vtxt{order:5}.checks{order:6}.dkreset{order:7}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 }

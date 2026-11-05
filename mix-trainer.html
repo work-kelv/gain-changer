@@ -207,11 +207,19 @@ footer{font-size:13px;color:var(--muted)}
 @media (max-width:980px){
   .main{display:flex;flex-direction:column;align-items:stretch}.side{display:contents}
   /* the panel freezes under the top of the screen, like a frozen pane */
-  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:52dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
+  .dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;order:1;max-height:42dvh;overflow-y:auto;scrollbar-gutter:stable;box-shadow:0 6px 14px color-mix(in srgb,var(--bg) 70%,transparent)}
   .stage{order:2}#coachcard{order:3}
+  /* nothing left to monitor on the grade page, so the panel lets go */
+  .dock.nofreeze{position:static;order:3;max-height:none;overflow:visible;box-shadow:none}
+  .dock.nofreeze svg#mv,.dock.nofreeze svg#rdr{max-height:none}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-  .dock svg#mv,.dock svg#rdr{max-height:38dvh}
-  .dock .dbus{grid-template-columns:1fr 1fr;gap:10px}.dock .dbus .mscale{display:none}.dock .dbus h3{font-size:12px}
+  .dock svg#mv,.dock svg#rdr{max-height:30dvh}
+  .dock svg#rdr{max-height:max(170px,calc(42dvh - 150px))}
+  .dock .dbus{grid-template-columns:1fr 1fr;gap:10px}.dock .dbus .mscale{display:none}.dock .dbus h3{font-size:11px;letter-spacing:.06em;white-space:nowrap}
+  .dock .dbus>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 6px}
+  .dock .dbus .lr{display:none}
+  .dock .dbus .pill{grid-column:2;grid-row:1;align-self:center;font-size:10.5px;padding:1px 6px}
+  .dock .dbus .meter,.dock .dbus .balm{grid-column:1/-1;grid-row:2}
   .steps{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:520px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.gradebox{grid-template-columns:minmax(0,1fr)}.mascot{margin:0 auto}.rpwrap{grid-template-columns:minmax(0,1fr)}#rpimg{max-width:260px;margin:0 auto}.br{grid-template-columns:82px minmax(0,1fr) 30px;row-gap:2px}.br .tag{grid-column:1/-1;text-align:left}.br .tag:empty{display:none}}
 </style>
@@ -722,7 +730,7 @@ function renderStage(){
   if(step===6)h=gradeView();
   const bc=document.getElementById("buscard");bc.hidden=step!==2;
   bc.innerHTML=step!==2?"":`<div class="bus2 dbus"><div><h3>Main mix</h3><div class="meter"><span class="zone" style="left:${34/40*100}%;width:${3/40*100}%"></span><span class="fill" id="mm"></span></div><div class="mscale"><span>−40</span><span>−6…−3</span><span>0</span></div><span class="pill" id="mmv"></span></div>
-    <div><h3>Left / right balance</h3><div class="balm"><span class="ok"></span><span class="nd" id="lrn"></span></div><div class="mscale"><span>left heavy</span><span>centre</span><span>right heavy</span></div><span class="pill" id="lrv"></span></div></div>`;
+    <div><h3><span class="lr">Left / right </span>balance</h3><div class="balm"><span class="ok"></span><span class="nd" id="lrn"></span></div><div class="mscale"><span>left heavy</span><span>centre</span><span>right heavy</span></div><span class="pill" id="lrv"></span></div></div>`;
   el.innerHTML=h+navRow();
   if(book)el.querySelectorAll(".strip,.nav.bulk,.card .bus").forEach(x=>x.inert=true);
   refresh();
@@ -749,6 +757,7 @@ function sheetHtml(){
 }
 function renderDock(){
   const tab=tabNow(),show=step>=1&&step<=5,tb=document.getElementById("docktabs");
+  document.getElementById("dock").classList.toggle("nofreeze",step===6);
   tb.hidden=!show;tb.querySelectorAll("[data-dt]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dt===tab));
   document.getElementById("dview").hidden=tab!=="view";const ds=document.getElementById("dsheet");ds.hidden=tab!=="sheet";if(tab==="sheet")ds.innerHTML=sheetHtml();
 }
