@@ -363,7 +363,7 @@ function build(){
   band.toms=band.drums?clamp(band.toms||3,1,3):0;
   const old=Object.fromEntries(ch.map(c=>[c.id,c]));ch=[];
   const add=(id,t,name,pair,sd)=>{const o=old[id];if(o)o.name=name;ch.push(o||{id,t,name,pair,sd,pan:0,trim:0,fader:0,hpf:20,eqf:1000,eqg:0,comp:{on:false,thr:-10,ratio:2,att:10,rel:150},rev:0,dly:0,inPeak:Math.round(rnd(-34,-14)),prob:Math.floor(Math.random()*T[t].probs.length),dprob:Math.floor(Math.random()*DYN[t].length)})};
-  const pr=(id,t,name)=>{add(id+"l",t,name+" L",name,-1);add(id+"r",t,name+" R",name,1)};
+  const pr=(id,t,name)=>{add(id+"l",t,name+" L",name,-1);add(id+"r",t,name+" R",name,1);const [l,r]=ch.slice(-2);r.inPeak=l.inPeak;r.prob=l.prob;r.dprob=l.dprob};
   if(band.lead)add("lead","lead","Worship leader");
   for(let i=1;i<=(band.bv||0);i++)add("bv"+i,"bv","Vocalist "+i);
   if(band.drums){add("kick","kick","Kick");add("snare","snare","Snare");for(let i=1;i<=band.toms;i++)add("tom"+i,"tom","Tom "+i);if(band.hhmic)add("hh","hh","Hi-hat");if(band.ridemic)add("ride","ride","Ride");pr("oh","oh","OH")}
@@ -389,7 +389,11 @@ const link=c=>{const o=mate(c);if(!o)return;for(const k of ["trim","fader","hpf"
 /* reverb and delay after the return faders (fader at the bottom = off) */
 const effRev=c=>fxg.ret<=-30?0:c.rev*Math.pow(10,fxg.ret/20);
 const effDly=c=>fxg.dret<=-30?0:c.dly*Math.pow(10,fxg.dret/20);
+/* a band with no drums and up to three cards may mix in mono: every pan at C */
+const smallBand=()=>!ch.some(c=>c.t==="kick")&&units().length<=3;
+const monoMix=()=>smallBand()&&ch.every(c=>Math.abs(c.pan)<=10);
 function masks(){
+  if(monoMix())return [];
   const out=[],lead=ch.find(c=>c.t==="lead"),ref=lead?loud(lead):master();
   for(let i=0;i<ch.length;i++)for(let j=i+1;j<ch.length;j++){const a=ch[i],b=ch[j];
     if(T[a.t].kit||T[b.t].kit||T[a.t].bed||T[b.t].bed||(a.pair&&a.pair===b.pair))continue;if(Math.abs(a.pan-b.pan)>=20)continue;
@@ -439,7 +443,7 @@ function ohState(){
 const kitBad=c=>{const k=ohState();return !!k&&(k.st==="oh"&&c.pair==="OH"||k.st==="hat"&&c.t==="hh"||k.st==="ride"&&c.t==="ride")};
 function sBal(){
   if(!ch.length)return{s:0,notes:[]};
-  let s=100;const n=[],m=master(),lead=ch.find(c=>c.t==="lead");
+  let s=100;const n=[],m=master(),lead=ch.find(c=>c.t==="lead"),mono=monoMix();
   if(m>0){s-=30;n.push(["b",`The main mix is clipping (${m.toFixed(1)} dB). Pull every fader down together.`,"SA BS"])}
   else if(m<-6||m>-3){const d=m<-6?(-6-m):(m+3);s-=Math.min(20,d*3);n.push(["w",`Main mix peaks around ${m.toFixed(1)} dB. Savage aims for −6 to −3 with the master at unity.`,"SA"])}
   if(lead){const L=loud(lead);
@@ -465,7 +469,7 @@ function sBal(){
     if(kit&&kit.st==="oh"){s-=8;n.push(["b",`OH L and R are the wrong way round. OH R is nearest the hi-hat and OH L is nearest the ride, but they are panned away from the ${kit.mics} mic${kit.mics.includes(" and ")?"s":""}, so the same cymbals pull to both sides. Swap the two overhead pans.`,"SA",[l]])}
     else if(kit&&kit.st==="hat"){s-=8;n.push(["b",`The hi-hat mic is on the wrong side. It should sit on the same side as OH R, the overhead nearest it, or the hi-hat pulls to both sides.`,"SA",[kit.hh]])}
     else if(kit&&kit.st==="ride"){s-=8;n.push(["b",`The ride mic is on the wrong side. It should sit on the same side as OH L, the overhead nearest it, or the ride pulls to both sides.`,"SA",[kit.rd]])}
-    if(!(kit&&kit.st==="oh")&&gap<40){s-=6;n.push(["w",`${k} L and R ${gap<0?"are swapped":"are nearly on top of each other"}. Pan the L channel to the left of the R channel, or the stereo collapses. (Savage may narrow stereo keys onto one side, but keeps the two apart.)`,"SA",[l]])}
+    if(!mono&&!(kit&&kit.st==="oh")&&gap<40){s-=6;n.push(["w",`${k} L and R ${gap<0?"are swapped":"are nearly on top of each other"}. Pan the L channel to the left of the R channel, or the stereo collapses. (Savage may narrow stereo keys onto one side, but keeps the two apart.)`,"SA",[l]])}
     const d=Math.abs(loud(l)-loud(r));if(d>3){s-=4;n.push(["w",`${k} L and R differ by ${d.toFixed(0)} dB. Group a stereo pair so it stays matched.`,"SE",[l]])}}
   const hh=ch.find(c=>c.t==="hh"),rd=ch.find(c=>c.t==="ride");
   if(hh&&Math.abs(hh.pan)<20){s-=4;n.push(["w","The hi-hat is in the middle. Savage pans it out to its side of the kit, which widens the drums.","SA OW",[hh]])}
@@ -473,8 +477,9 @@ function sBal(){
   const tm=ch.filter(c=>c.t==="tom"),kitO=ohState();
   if(tm.length>=2&&kitO&&Math.sign(kitO.r.pan-kitO.l.pan)&&(tm[0].pan-tm[tm.length-1].pan)*Math.sign(kitO.r.pan-kitO.l.pan)<0){s-=6;n.push(["w",`The toms run the wrong way across the kit. Tom 1 sits on the hi-hat side and Tom ${tm.length} on the ride side, so each hit comes from where the overheads place it.`,"SA",tm])}
   const sides=ch.filter(c=>["egtr","agtr","piano"].includes(c.t));
-  if(sides.length>=2&&sides.every(c=>Math.abs(c.pan)<30)){s-=10;n.push(["w","The guitars and keys are all in the middle. Spread same-range parts apart to unmask them.","SA OW",sides])}
+  if(!mono&&sides.length>=2&&sides.every(c=>Math.abs(c.pan)<30)){s-=10;n.push(["w","The guitars and keys are all in the middle. Spread same-range parts apart to unmask them.","SA OW",sides])}
   const mk=masks();if(mk.length){s-=Math.min(12,4*mk.length);for(const [a,b] of mk)n.push(["w",`${a.name} and ${b.name} are fighting for the same space (red link). Pan apart, rebalance, or fix it in EQ.`,"OW",[a,b]])}
+  if(mono)n.push(["ok","Mono mix. That is fine for a band this small: Oltheten calls mono the most robust mix.","OL"]);
   if(!n.length)n.push(["ok","Centred foundation, leader on top, balanced left and right.","OW SA SE"]);
   return{s:clamp(s,0,100),notes:n};
 }
@@ -537,7 +542,7 @@ function total(){
   let cap=100,why=[];
   if(clip){cap=69;why.push("Something is clipping, so the grade is capped at C.")}
   if(r[2]<50){cap=Math.min(cap,64);why.push("The balance is poor, and a bad balance sinks a mix.")}
-  if(helped.size&&t>=93){cap=Math.min(cap,92);why.push("You kept a book answer, so S is out of reach.")}
+  if(helped.size>=2&&t>=93){cap=Math.min(cap,92);why.push("You kept book answers on more than one step, so S is out of reach.")}
   return{t:Math.min(t,cap),r,why};
 }
 const letter=t=>t>=93?"S":t>=85?"A":t>=75?"B":t>=65?"C":t>=50?"D":"F";
@@ -559,6 +564,8 @@ function suggestPans(){
   ch.forEach(c=>{if(FOUND.includes(c.t))c.pan=0;if(c.pair)c.pan=c.sd*PP[c.pair];if(c.t==="hh")c.pan=60;if(c.t==="ride")c.pan=-45});
   /* Savage: rack toms 35% right and left, floor tom 85% left; the floor tom stops at 80% for the team rule */
   const tm=ch.filter(c=>c.t==="tom");tm.forEach((c,i)=>c.pan={1:[-35],2:[35,-80],3:[35,-35,-80]}[tm.length][i]);
+  /* with no leader, drums or bass there is nothing in the centre to balance a panned part */
+  if(!ch.some(c=>FOUND.includes(c.t))){if(smallBand())ch.forEach(c=>c.pan=0);else if(side.length===1&&n("bv")<=2)side[0].pan=0}
 }
 const HELP={
  1:()=>ch.forEach(c=>c.trim=-11-c.inPeak),
@@ -640,7 +647,7 @@ function renderStage(){
         <span class="pill" id="pl${i}"></span></div></div></div>`)}`;
   }
   if(step===2){
-    h=stageHead(2,"Pan first, then set the faders. Keep instruments inside the red marks: hard left and right are for the reverb returns. Drag a knob, use the arrow keys, or double-click to centre it.")+
+    h=stageHead(2,"Pan first, then set the faders. Keep instruments inside the red marks: hard left and right are for the reverb returns. Drag a knob, use the arrow keys, or double-click to centre it."+(smallBand()?" A band this small can also stay in mono: leave every pan at C.":""))+
       `<div class="nav bulk"><span></span><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="allc">All pans to C</button><button type="button" class="btn" data-nudge="-1">All faders −1 dB</button><button type="button" class="btn" data-nudge="1">All faders +1 dB</button><button type="button" class="btn" id="alldown">All faders down</button></span></div>
       ${GR((c,i)=>`<div class="strip">${head(c,"level "+Math.round(loud(c))+" dB")}
         ${c.pair?`<div class="knobpair">${knobH(i,c.pair==="OH"?"L near ride":"Pan L")}${knobH(ch.indexOf(mate(c)),c.pair==="OH"?"R near hi-hat":"Pan R")}</div>${c.pair==="OH"?`<span class="pill" id="ohs"></span>`:""}`:knobH(i,"Pan")}

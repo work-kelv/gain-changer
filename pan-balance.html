@@ -593,6 +593,7 @@ function suggest(){
   const bp={1:[20],2:[-25,25],3:[-35,0,35],4:[-50,-20,20,50]}[n("bvs")]||[];
   bp.forEach((p,i)=>c.push({id:"bv"+i,n:"Vocalist "+(i+1),pan:p,lvl:-9,g:"bv"}));
   if(bp.length)nt.push([bp.length===3?"Three vocalists at 35% left, centre and 35% right: the lowest part in the centre, higher parts outward.":`Backing vocals at ${bp.map(word).join(", ")}. Savage: one or two parts at 15–30%, more parts spread wider.`,"SA OL"]);
+  if(!hasDrums&&c.length&&c.filter(x=>!x.pair||/l$/.test(x.id)).length<=3)nt.push(["A band this small can also run in mono: press All pans to C on the practice desk. Oltheten calls mono the most robust mix.","OL"]);
   /* channel numbers run group by group, as on the trainer */
   c.forEach(x=>{x.t=chType(x.id);x.name=x.n;if(x.pair)x.sd=/l$/.test(x.id)?-1:1});
   c.sort((a,b)=>ORDER.indexOf(a.t)-ORDER.indexOf(b.t));
@@ -669,7 +670,11 @@ document.getElementById("dallc").addEventListener("click",()=>{desk.forEach(c=>c
 document.getElementById("dalldown").addEventListener("click",()=>{desk.forEach(c=>c.lvl=-40);mixer();analyse()});
 document.querySelector(".dkbulk").addEventListener("click",e=>{const b=e.target.closest("[data-nudge]");if(b){desk.forEach(c=>c.lvl=clamp(c.lvl+ +b.dataset.nudge,-40,10));mixer();analyse()}});
 /* two parts in the same range and the same place, at levels close enough to fight (the trainer's clash rule, without its EQ step) */
+/* a band with no drums and up to three cards may mix in mono: every pan at C */
+const smallBand=()=>!desk.some(c=>c.t==="kick")&&desk.filter(c=>!c.pair||c.sd===-1).length<=3;
+const monoMix=()=>smallBand()&&desk.every(c=>Math.abs(c.pan)<=10);
 function masks(){
+  if(monoMix())return [];
   const out=[],lead=desk.find(c=>c.t==="lead"),ref=lead?loud(lead):Math.max(...desk.map(loud));
   for(let i=0;i<desk.length;i++)for(let j=i+1;j<desk.length;j++){const a=desk[i],b=desk[j];
     if(PT[a.t].kit||PT[b.t].kit||PT[a.t].bed||PT[b.t].bed||(a.pair&&a.pair===b.pair))continue;if(Math.abs(a.pan-b.pan)>=20)continue;
@@ -833,7 +838,8 @@ function analyse(){
   const prs={};desk.forEach(c=>{if(c.pair)(prs[c.pair]=prs[c.pair]||[]).push(c)});
   const hardP=Object.keys(prs).filter(k=>prs[k].length===2&&prs[k].every(c=>Math.abs(c.pan)>=90));
   if(hardP.length>=2&&hardP.some(k=>k!=="OH"))ck.push(["warn",`${hardP.join(", ")} are all spread hard left/right on top of each other (Big Mono). Narrow one, or keep it inside the extremes.`,"OW OL"]);
-  for(const k in prs){const [l,r]=prs[k];if(r&&r.pan-l.pan<40)ck.push(["warn",`${k} L and R are almost on top of each other${l.pan>r.pan?" (swapped)":""}. Spread the pair, or the stereo collapses.`,"SA"])}
+  if(desk.length&&monoMix())ck.push(["ok","Mono mix. That is fine for a band this small: Oltheten calls mono the most robust mix.","OL"]);
+  else for(const k in prs){const [l,r]=prs[k];if(r&&r.pan-l.pan<40)ck.push(["warn",`${k} L and R are almost on top of each other${l.pan>r.pan?" (swapped)":""}. Spread the pair, or the stereo collapses.`,"SA"])}
   const hat=desk.find(c=>c.id==="hat"),rd=desk.find(c=>c.id==="ride");
   if(hat&&rd&&Math.abs(hat.pan)>=10&&Math.sign(hat.pan)===Math.sign(rd.pan))ck.push(["warn","Hi-hat and ride are on the same side. Pan them as the kit sits: the ride goes opposite the hat.","SA"]);
   const xhard=desk.filter(c=>Math.abs(c.pan)>85);
