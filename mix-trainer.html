@@ -193,10 +193,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 .big{font:800 clamp(110px,18vw,180px)/.85 var(--font-display);text-align:center;min-width:1.1em;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 .brk{display:flex;flex-direction:column;gap:8px}
-.br{display:grid;grid-template-columns:120px minmax(0,1fr) 54px;gap:10px;align-items:center;font-size:14px}
-.br .bar{height:12px;border-radius:6px;background:var(--panel2);overflow:hidden}
-.br .bar i{display:block;height:100%;border-radius:6px}
-.br span:last-child{font:600 13px var(--font-data);text-align:right}
+.br{display:grid;grid-template-columns:120px minmax(0,1fr) 30px 92px;gap:10px;align-items:center;font-size:14px;padding:3px 8px;border-radius:8px}
+.br.bk{background:color-mix(in srgb,var(--amber) 16%,transparent)}
+.br .tag{font:600 11px var(--font-data);color:var(--amber);text-align:right}
+.br .muted{font:600 13px var(--font-data)}
+.br .bar{height:22px;border-radius:6px;background:var(--panel2);overflow:hidden}
+.br .bar i{display:flex;align-items:center;justify-content:flex-end;box-sizing:border-box;height:100%;min-width:24px;padding-right:7px;border-radius:6px;font-style:normal}
+.br .bar b{font:700 15px var(--font-display);color:var(--bg)}
+.br .v{font:600 13px var(--font-data);white-space:nowrap}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:20}
 footer{font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.big{animation:none}.meter .fill,.step .bar i,.balm .nd,.rd{transition:none}}
@@ -209,7 +213,7 @@ footer{font-size:13px;color:var(--muted)}
   .dock svg#mv,.dock svg#rdr{max-height:38dvh}
   .dock .dbus{grid-template-columns:1fr 1fr;gap:10px}.dock .dbus .mscale{display:none}.dock .dbus h3{font-size:12px}
   .steps{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media (max-width:520px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.gradebox{grid-template-columns:minmax(0,1fr)}.mascot{margin:0 auto}.rpwrap{grid-template-columns:minmax(0,1fr)}#rpimg{max-width:260px;margin:0 auto}.br{grid-template-columns:90px minmax(0,1fr) 46px}}
+@media (max-width:520px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}.gradebox{grid-template-columns:minmax(0,1fr)}.mascot{margin:0 auto}.rpwrap{grid-template-columns:minmax(0,1fr)}#rpimg{max-width:260px;margin:0 auto}.br{grid-template-columns:82px minmax(0,1fr) 30px;row-gap:2px}.br .tag{grid-column:1/-1;text-align:left}.br .tag:empty{display:none}}
 </style>
 <style>
 /* the base rules a bare page needs outside the artifact viewer */
@@ -734,7 +738,7 @@ function gradeView(){
   setTimeout(()=>{if(!m.clip&&(L==="S"||L==="A"))confetti(L);drawReport()},50);
   return `<div class="card"><div class="gradebox"><div class="mascot"><img src="${MIMG[m.k]}" alt="${m.n}"><div class="big" style="color:var(${LCOL[L]})">${L}</div></div>
     <div style="display:flex;flex-direction:column;gap:10px;min-width:0"><span class="eyebrow">${m.clip?"Secret mascot found":L+" grade"}</span><h2>${m.n}</h2><p class="catch">${m.line}</p><p class="muted">Score ${t.toFixed(0)} / 100 · ${ch.length} channels${helped.size?" · book answers used on "+[...helped].map(k=>STEPS[k][0]).join(", "):""}</p>${why.map(w=>`<p style="color:var(--amber)">${w}</p>`).join("")}
-    <div class="brk">${[1,2,3,4,5].map(k=>{const v=r[k],l=letter(v);return `<div class="br"><span>${STEPS[k][0]} <span class="muted">×${W[k]*100}%</span></span><span class="bar"><i style="width:${v}%;background:var(${LCOL[l]})"></i></span><span>${l} ${v.toFixed(0)}</span></div>`}).join("")}</div></div></div></div>
+    <div class="brk">${[1,2,3,4,5].map(k=>{const v=r[k],l=letter(v);const bk=helped.has(k);return `<div class="br${bk?" bk":""}"><span>${STEPS[k][0]} <span class="muted">×${W[k]*100}%</span></span><span class="bar"><i style="width:${v}%;background:var(${LCOL[l]})"><b>${l}</b></i></span><span class="v">${v.toFixed(0)}</span><span class="tag">${bk?"Book answer":""}</span></div>`}).join("")}</div></div></div></div>
     <div class="card"><h3>What to fix first</h3><ul class="notes">${all.map(([sv,tx,s,k])=>`<li class="${sv}"><b>${STEPS[k][0]}:</b> ${tx}${s?`<em>${srcs(s)}</em>`:""}</li>`).join("")||"<li>Nothing left to fix.</li>"}</ul></div>
     <div class="card"><h3>Your report card</h3><div class="rpwrap"><img id="rpimg" alt="One-page report card for this mix">
       <div class="rpctl"><p class="muted">One page with your mascot, grade, stage scores and what to fix first. Keep it, or share it with the team.</p>
@@ -777,12 +781,14 @@ async function paintReport(){
   for(const [k,v,u] of cells){x.fillStyle=mute;x.font=`500 18px ${RF.m}`;x.fillText(k,px,y+36);fitFont(x,v,unit*u-24,32,z=>`600 ${z}px ${RF.b}`);x.fillStyle=ink;x.fillText(v,px,y+76);px+=unit*u}
   /* stage bars */
   y=908;x.fillStyle=ink;x.font=`700 38px ${RF.d}`;x.fillText("Stage by stage",L0,y);y+=22;
-  for(const k of [1,2,3,4,5]){const v=r[k],l=letter(v),yy=y+(k-1)*50;x.fillStyle=ink;x.font=`600 28px ${RF.b}`;x.fillText(STEPS[k][0],L0,yy+34);const nw=x.measureText(STEPS[k][0]).width;x.fillStyle=mute;x.font=`500 18px ${RF.m}`;x.fillText("×"+W[k]*100+"%",L0+nw+12,yy+34);
-    const bx0=380,bw=660,by=yy+18;x.fillStyle="#e9ecf0";x.beginPath();x.roundRect(bx0,by,bw,18,4);x.fill();if(v>0){x.fillStyle=PAPER[l];x.beginPath();x.roundRect(bx0,by,Math.max(8,bw*v/100),18,4);x.fill()}
-    x.textAlign="right";x.fillStyle=ink;x.font=`600 28px ${RF.b}`;x.fillText(l+" "+v.toFixed(0),R0,yy+36);x.textAlign="left"}
+  for(const k of [1,2,3,4,5]){const v=r[k],l=letter(v),yy=y+(k-1)*50,bk=helped.has(k);if(bk){x.fillStyle="#fdf1d6";x.beginPath();x.roundRect(L0-14,yy+4,R0-L0+28,46,8);x.fill()}x.fillStyle=ink;x.font=`600 28px ${RF.b}`;x.fillText(STEPS[k][0],L0,yy+34);const nw=x.measureText(STEPS[k][0]).width;x.fillStyle=mute;x.font=`500 18px ${RF.m}`;x.fillText("×"+W[k]*100+"%",L0+nw+12,yy+34);
+    const bx0=330,bw=640,by=yy+10,bh=34,fw=Math.max(40,bw*v/100);x.fillStyle="#e9ecf0";x.beginPath();x.roundRect(bx0,by,bw,bh,6);x.fill();x.fillStyle=PAPER[l];x.beginPath();x.roundRect(bx0,by,fw,bh,6);x.fill();
+    x.textAlign="right";x.fillStyle="#fff";x.font=`700 27px ${RF.d}`;x.fillText(l,bx0+fw-12,by+26);x.textAlign="left";
+    x.fillStyle=ink;x.font=`600 28px ${RF.b}`;x.fillText(v.toFixed(0),bx0+bw+14,yy+36);
+    if(bk){x.textAlign="right";x.fillStyle="#7a5200";x.font=`500 17px ${RF.m}`;x.fillText("BOOK ANSWER",R0,yy+33);x.textAlign="left"}}
   /* what to fix first, as much as fits on the page */
   y+=5*50+50;const lim=H0-132,all=fixList(20);
-  x.font=`400 24px ${RF.b}`;const lines=[...why.map(w=>["cap",w]),...(helped.size?[["note","Book answers used on "+[...helped].map(k=>STEPS[k][0]).join(", ")+"."]]:[])];
+  x.font=`400 24px ${RF.b}`;const lines=why.map(w=>["cap",w]);
   for(const [kind,tx] of lines){x.fillStyle=kind==="cap"?"#a86f00":mute;for(const l of wrap(x,tx,R0-L0)){x.fillText(l,L0,y);y+=32}}
   if(lines.length)y+=18;
   x.fillStyle=ink;x.font=`700 38px ${RF.d}`;x.fillText("What to fix first",L0,y);y+=44;let shown=0;
